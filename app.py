@@ -48,7 +48,21 @@ def experience():
         return jsonify()
 
     if request.method == 'POST':
-        return jsonify({})
+
+        request_body = request.get_json()
+
+        new_experience = Experience(
+            request_body['title'],
+            request_body['company'],
+            request_body['start_date'],
+            request_body['end_date'],
+            request_body['description'],
+            request_body['logo']
+        )
+
+        data['experience'].append(new_experience)
+
+        return jsonify({'message': 'New experience created'}), 201
 
     return jsonify({})
 
