@@ -62,7 +62,12 @@ def experience():
 
         data['experience'].append(new_experience)
 
-        return jsonify({'message': 'New experience created'}), 201
+        new_experience_id = len(data['experience']) - 1
+
+        return jsonify({
+            'message': 'New experience created',
+            'id': new_experience_id
+            }), 201
 
     return jsonify({})
 
