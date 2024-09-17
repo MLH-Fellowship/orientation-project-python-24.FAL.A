@@ -1,3 +1,6 @@
+'''
+Helper functions for the Flask application
+'''
 
 def validate_fields(field_names, request_data):
     '''

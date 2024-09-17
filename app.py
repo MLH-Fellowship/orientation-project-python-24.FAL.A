@@ -59,6 +59,7 @@ def experience():
 
     return jsonify({})
 
+
 @app.route('/resume/education', methods=['GET', 'POST'])
 def education():
     '''
@@ -94,18 +95,16 @@ def user_information():
     '''
     if request.method == 'GET':
         return jsonify(data['user_information']), 200
-    else:
-        error = validate_fields(
-            ['name', 'email_address', 'phone_number'], request.json)
-        if error:
-            return jsonify({'error': ', '.join(error) + ' parameter(s) is required'}), 400
 
-        if request.method == 'POST':
-            data['user_information'] = request.json
-            return jsonify(data['user_information']), 201
+    error = validate_fields(
+        ['name', 'email_address', 'phone_number'], request.json)
 
-        elif request.method == 'PUT':
-            data['user_information'] = request.json
-            return jsonify(data['user_information']), 200
+    if error:
+        return jsonify({'error': ', '.join(error) + ' parameter(s) is required'}), 400
 
-    return jsonify({'error': 'Invalid request method'}), 405
+    if request.method in ('POST', 'PUT'):
+        data['user_information'] = request.json
+        return jsonify(data['user_information']), 201
+
+    data['user_information'] = request.json
+    return jsonify(data['user_information']), 200
