@@ -3,7 +3,7 @@ Flask Application
 '''
 from flask import Flask, jsonify, request
 from models import Experience, Education, Skill
-from helpers import validate_fields
+from helpers import validate_fields, validate_phone_number
 
 app = Flask(__name__)
 
@@ -99,6 +99,10 @@ def user_information():
     error = validate_fields(
         ['name', 'email_address', 'phone_number'], request.json)
 
+    is_valid_phone_number = validate_phone_number(request.json['phone_number'])
+
+    if not is_valid_phone_number:
+        return jsonify({'error': 'Invalid phone number'}), 400
     if error:
         return jsonify({'error': ', '.join(error) + ' parameter(s) is required'}), 400
 
