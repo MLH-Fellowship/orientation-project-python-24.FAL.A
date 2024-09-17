@@ -77,7 +77,6 @@ def experience():
                 'error': 'Missing required fields',
                 'missing_fields': missing_fields
             }), 400
-        
         if invalid_fields:
             return jsonify({
                 'error': 'Invalid field types',
