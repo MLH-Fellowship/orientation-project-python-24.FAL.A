@@ -3,6 +3,7 @@ Flask Application
 '''
 from flask import Flask, jsonify, request
 from models import Experience, Education, Skill
+from helpers import validate_fields
 
 app = Flask(__name__)
 
@@ -27,7 +28,13 @@ data = {
         Skill("Python",
               "1-2 Years",
               "example-logo.png")
-    ]
+    ],
+    "user_information":
+        {
+            "name": "",
+            "email_address": "",
+            "phone_number": ""
+    }
 }
 
 
@@ -78,3 +85,27 @@ def skill():
         return jsonify({})
 
     return jsonify({})
+
+
+@app.route('/resume/user_information', methods=['GET', 'POST', 'PUT'])
+def user_information():
+    '''
+    Handles User Information requests
+    '''
+    if request.method == 'GET':
+        return jsonify(data['user_information']), 200
+    else:
+        error = validate_fields(
+            ['name', 'email_address', 'phone_number'], request.json)
+        if error:
+            return jsonify({'error': ', '.join(error) + ' parameter(s) is required'}), 400
+
+        if request.method == 'POST':
+            data['user_information'] = request.json
+            return jsonify(data['user_information']), 201
+
+        elif request.method == 'PUT':
+            data['user_information'] = request.json
+            return jsonify(data['user_information']), 200
+
+    return jsonify({'error': 'Invalid request method'}), 405

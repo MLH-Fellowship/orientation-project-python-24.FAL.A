@@ -16,7 +16,7 @@ def test_client():
 def test_experience():
     '''
     Add a new experience and then get all experiences. 
-    
+
     Check that it returns the new experience in that list
     '''
     example_experience = {
@@ -37,7 +37,7 @@ def test_experience():
 def test_education():
     '''
     Add a new education and then get all educations. 
-    
+
     Check that it returns the new education in that list
     '''
     example_education = {
@@ -58,7 +58,7 @@ def test_education():
 def test_skill():
     '''
     Add a new skill and then get all skills. 
-    
+
     Check that it returns the new skill in that list
     '''
     example_skill = {
@@ -72,3 +72,21 @@ def test_skill():
 
     response = app.test_client().get('/resume/skill')
     assert response.json[item_id] == example_skill
+
+
+def test_post_user_information():
+    '''
+    Test the POST request for user information.
+    It should allow setting user information and return status code 201.
+    '''
+    new_user_info = {
+        "name": "John Doe",
+        "email_address": "john@example.com",
+        "phone_number": "+237680162416"
+
+    }
+    response = app.test_client().post('/resume/user_information', json=new_user_info)
+    assert response.status_code == 201
+    assert response.json['name'] == new_user_info['name']
+    assert response.json['email_address'] == new_user_info['email_address']
+    assert response.json['phone_number'] == new_user_info['phone_number']
