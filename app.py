@@ -49,7 +49,40 @@ def experience():
 
     if request.method == 'POST':
 
+        if not request.is_json:
+            return jsonify({'error': 'Request must be JSON '}), 400
+
         request_body = request.get_json()
+
+        required_fields = {
+            'title': str,
+            'company': str,
+            'start_date': str,
+            'end_date': str,
+            'description': str,
+            'logo': str
+        }
+
+        missing_fields = []
+        invalid_fields = []
+
+        for field, field_type in required_fields.items():
+            if field not in request_body:
+                missing_fields.append(field)
+            elif not isinstance(request_body[field], field_type):
+                invalid_fields.append(field)
+
+        if missing_fields:
+            return jsonify({
+                'error': 'Missing required fields',
+                'missing_fields': missing_fields
+            }), 400
+        
+        if invalid_fields:
+            return jsonify({
+                'error': 'Invalid field types',
+                'invalid_fields': invalid_fields
+            }), 400
 
         new_experience = Experience(
             request_body['title'],
