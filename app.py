@@ -110,5 +110,4 @@ def user_information():
         data['user_information'] = request.json
         return jsonify(data['user_information']), 201
 
-    data['user_information'] = request.json
-    return jsonify(data['user_information']), 200
+    return jsonify({'error': 'Nothing changed'}), 400
