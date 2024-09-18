@@ -17,7 +17,13 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 
 def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+    """
+    Check if the uploaded file has an allowed extension.
+
+    :param filename: The name of the file to check
+    :return: True if the file extension is allowed, False otherwise
+    """
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 data = {
