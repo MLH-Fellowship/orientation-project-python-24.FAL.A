@@ -2,7 +2,7 @@
 Tests in Pytest
 '''
 from app import app
-from helpers import validate_fields
+from helpers import validate_fields, validate_phone_number
 
 
 def test_client():
@@ -92,6 +92,7 @@ def test_post_user_information():
     assert response.json['email_address'] == new_user_info['email_address']
     assert response.json['phone_number'] == new_user_info['phone_number']
 
+
 def test_validate_fields_all_present():
     '''
     Expect no missing fields
@@ -121,3 +122,19 @@ def test_validate_fields_missing_field():
         ["name", "email_address", "phone_number"], request_data)
 
     assert result == ["phone_number"]
+
+
+def test_valid_phone_number():
+    '''
+    Test a valid properly internationalized phone number returns True.
+    '''
+    valid_phone = "+14155552671"
+    assert validate_phone_number(valid_phone) is True
+
+
+def test_invalid_phone_number():
+    '''
+    Test an invalid phone number returns False.
+    '''
+    invalid_phone = "123456"
+    assert validate_phone_number(invalid_phone) is False
