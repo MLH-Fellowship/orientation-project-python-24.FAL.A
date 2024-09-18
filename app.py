@@ -3,6 +3,7 @@ Flask Application
 '''
 from flask import Flask, jsonify, request
 from models import Experience, Education, Skill
+from helpers import validate_fields, validate_phone_number
 
 app = Flask(__name__)
 
@@ -27,7 +28,13 @@ data = {
         Skill("Python",
               "1-2 Years",
               "example-logo.png")
-    ]
+    ],
+    "user_information":
+        {
+            "name": "",
+            "email_address": "",
+            "phone_number": ""
+    }
 }
 
 
@@ -103,6 +110,7 @@ def experience():
 
     return jsonify({})
 
+
 @app.route('/resume/education', methods=['GET', 'POST'])
 def education():
     '''
@@ -129,3 +137,28 @@ def skill():
         return jsonify({})
 
     return jsonify({})
+
+
+@app.route('/resume/user_information', methods=['GET', 'POST', 'PUT'])
+def user_information():
+    '''
+    Handles User Information requests
+    '''
+    if request.method == 'GET':
+        return jsonify(data['user_information']), 200
+
+    error = validate_fields(
+        ['name', 'email_address', 'phone_number'], request.json)
+
+    is_valid_phone_number = validate_phone_number(request.json['phone_number'])
+
+    if not is_valid_phone_number:
+        return jsonify({'error': 'Invalid phone number'}), 400
+    if error:
+        return jsonify({'error': ', '.join(error) + ' parameter(s) is required'}), 400
+
+    if request.method in ('POST', 'PUT'):
+        data['user_information'] = request.json
+        return jsonify(data['user_information']), 201
+
+    return jsonify({'error': 'Nothing changed'}), 400
