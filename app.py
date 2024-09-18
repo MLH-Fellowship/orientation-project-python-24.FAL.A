@@ -52,7 +52,7 @@ def experience():
     Handle experience requests
     '''
     if request.method == 'GET':
-        return jsonify()
+        return jsonify(data['experience'])
 
     if request.method == 'POST':
 
