@@ -59,7 +59,7 @@ def experience_by_index(index):
     '''
     if 0 <= len(data['experience']) and index < len(data['experience']):
         return jsonify(data['experience'][index])
-    return jsonify({'error': 'Index out of range'}), 404
+    return jsonify({'error': 'Experience not found'}), 404
 
 @app.route('/resume/education', methods=['GET', 'POST'])
 def education():
