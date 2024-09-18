@@ -2,6 +2,7 @@
 Tests in Pytest
 '''
 from app import app
+from helpers import validate_fields
 
 
 def test_client():
@@ -90,3 +91,33 @@ def test_post_user_information():
     assert response.json['name'] == new_user_info['name']
     assert response.json['email_address'] == new_user_info['email_address']
     assert response.json['phone_number'] == new_user_info['phone_number']
+
+def test_validate_fields_all_present():
+    '''
+    Expect no missing fields
+    '''
+    request_data = {
+        "name": "John Doe",
+        "email_address": "john@example.com",
+        "phone_number": "+123456789"
+    }
+
+    result = validate_fields(
+        ["name", "email_address", "phone_number"], request_data)
+
+    assert result == []
+
+
+def test_validate_fields_missing_field():
+    '''
+    Expect 'phone_number' to be missing
+    '''
+    request_data = {
+        "name": "John Doe",
+        "email_address": "john@example.com"
+    }
+
+    result = validate_fields(
+        ["name", "email_address", "phone_number"], request_data)
+
+    assert result == ["phone_number"]
