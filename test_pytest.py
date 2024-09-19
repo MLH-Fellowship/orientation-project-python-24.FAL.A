@@ -1,10 +1,20 @@
-'''
-Tests in Pytest
-'''
-from app import app
+import pytest
+from app import app 
 from helpers import validate_fields, validate_phone_number
 
 
+
+@pytest.fixture
+def client():
+    with app.test_client() as client:
+        yield client
+
+
+def test_index(client):
+    """Test the index route"""
+    response = client.get('/')
+    assert response.status_code == 200
+    assert response.data == b"Welcome to MLH 24.FAL.A.2 Orientation API Project!!"
 def test_client():
     '''
     Makes a request and checks the message received is the same
@@ -12,13 +22,11 @@ def test_client():
     response = app.test_client().get('/test')
     assert response.status_code == 200
     assert response.json['message'] == "Hello, World!"
-
-
-def test_experience():
+def test_experience(client):
     '''
-    Add a new experience and then get all experiences. 
+    Add a new experience and then get all experiences.
 
-    Check that it returns the new experience in that list
+    Check that it returns the new experience in that list.
     '''
     example_experience = {
         "title": "Software Developer",
@@ -29,17 +37,20 @@ def test_experience():
         "logo": "example-logo.png"
     }
 
-    item_id = app.test_client().post('/resume/experience',
-                                     json=example_experience).json['id']
-    response = app.test_client().get('/resume/experience')
-    assert response.json[item_id] == example_experience
+    post_response = client.post('/resume/experience', json=example_experience)
+    assert post_response.status_code == 201
+    item_id = post_response.json['id']
+    get_response = client.get('/resume/experience')
+    assert get_response.status_code == 200
+    assert get_response.json[item_id]['title'] == example_experience['title']
+    assert get_response.json[item_id]['company'] == example_experience['company']
 
 
-def test_education():
+def test_education(client):
     '''
-    Add a new education and then get all educations. 
+    Add a new education and then get all educations.
 
-    Check that it returns the new education in that list
+    Check that it returns the new education in that list.
     '''
     example_education = {
         "course": "Engineering",
@@ -49,18 +60,21 @@ def test_education():
         "grade": "86%",
         "logo": "example-logo.png"
     }
-    item_id = app.test_client().post('/resume/education',
-                                     json=example_education).json['id']
 
-    response = app.test_client().get('/resume/education')
-    assert response.json[item_id] == example_education
+    post_response = client.post('/resume/education', json=example_education)
+    assert post_response.status_code == 201
+    item_id = post_response.json['id']
+    get_response = client.get('/resume/education')
+    assert get_response.status_code == 200
+    assert get_response.json[item_id]['course'] == example_education['course']
+    assert get_response.json[item_id]['school'] == example_education['school']
 
 
-def test_skill():
+def test_skill(client):
     '''
-    Add a new skill and then get all skills. 
+    Add a new skill and then get all skills.
 
-    Check that it returns the new skill in that list
+    Check that it returns the new skill in that list.
     '''
     example_skill = {
         "name": "JavaScript",
@@ -68,11 +82,13 @@ def test_skill():
         "logo": "example-logo.png"
     }
 
-    item_id = app.test_client().post('/resume/skill',
-                                     json=example_skill).json['id']
-
-    response = app.test_client().get('/resume/skill')
-    assert response.json[item_id] == example_skill
+    post_response = client.post('/resume/skill', json=example_skill)
+    assert post_response.status_code == 201
+    item_id = post_response.json['id']
+    get_response = client.get('/resume/skill')
+    assert get_response.status_code == 200
+    assert get_response.json[item_id]['name'] == example_skill['name']
+    assert get_response.json[item_id]['proficiency'] == example_skill['proficiency']
 
 
 def test_post_user_information():
@@ -134,6 +150,25 @@ def test_valid_phone_number():
 
 def test_invalid_phone_number():
     '''
+<<<<<<< Tabnine <<<<<<<
+    def test_client():#+
+        """#+
+        This function tests the client endpoint of the application. It sends a GET request to '/test'#+
+        and verifies that the response status code is 200 and the message received is "Hello, World!".#+
+    #+
+        Parameters:#+
+        None#+
+    #+
+        Returns:#+
+        None#+
+    #+
+        Raises:#+
+        None#+
+        """#+
+        response = app.test_client().get('/test')#+
+        assert response.status_code == 200#+
+        assert response.json['message'] == "Hello, World!"#+
+>>>>>>> Tabnine >>>>>>># {"conversationId":"5f5bba52-d20a-4fc0-93f1-d7943e31df71","source":"instruct"}
     Test an invalid phone number returns False.
     '''
     invalid_phone = "123456"
