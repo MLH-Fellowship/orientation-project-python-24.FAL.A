@@ -134,7 +134,52 @@ def skill():
         return jsonify({})
 
     if request.method == 'POST':
-        return jsonify({})
+
+        if not request.is_json:
+            return jsonify({'error': 'Request must be JSON'}), 400
+
+        request_body = request.get_json()
+
+        required_fields = {
+            'name': str,
+            'proficiency': str,
+            'logo': str
+        }
+
+        missing_fields = []
+        invalid_fields = []
+
+        for field, field_type in required_fields.items():
+            if field not in request_body:
+                missing_fields.append(field)
+            elif not isinstance(request_body[field], field_type):
+                invalid_fields.append(field)
+
+        if missing_fields:
+            return jsonify({
+                'error': 'Missing required fields',
+                'missing_fields': missing_fields
+            }), 400
+        if invalid_fields:
+            return jsonify({
+                'error': 'Invalid field types',
+                'invalid_fields': invalid_fields
+            }), 400
+
+        new_skills = Skill(
+            request_body['name'],
+            request_body['proficiency'],
+            request_body['logo']
+        )
+
+        data['skill'].append(new_skills)
+
+        new_skills_id = len(data['skill']) - 1
+
+        return jsonify({
+            'message': 'New skills created',
+            'id': new_skills_id
+        }), 201
 
     return jsonify({})
 
