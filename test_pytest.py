@@ -1,33 +1,27 @@
 import pytest
-from app import app 
+from app import app
 from helpers import validate_fields, validate_phone_number
-
-
 
 @pytest.fixture
 def client():
+    """Fixture for creating a test client."""
     with app.test_client() as client:
         yield client
 
-
 def test_index(client):
-    """Test the index route"""
+    """Test the index route."""
     response = client.get('/')
     assert response.status_code == 200
     assert response.data == b"Welcome to MLH 24.FAL.A.2 Orientation API Project!!"
-def test_client():
-    '''
-    Makes a request and checks the message received is the same
-    '''
-    response = app.test_client().get('/test')
+
+def test_client(client):
+    """Makes a request and checks the message received is the same."""
+    response = client.get('/test')
     assert response.status_code == 200
     assert response.json['message'] == "Hello, World!"
-def test_experience(client):
-    '''
-    Add a new experience and then get all experiences.
 
-    Check that it returns the new experience in that list.
-    '''
+def test_experience(client):
+    """Add a new experience and check if it's returned in the list."""
     example_experience = {
         "title": "Software Developer",
         "company": "A Cooler Company",
@@ -45,13 +39,8 @@ def test_experience(client):
     assert get_response.json[item_id]['title'] == example_experience['title']
     assert get_response.json[item_id]['company'] == example_experience['company']
 
-
 def test_education(client):
-    '''
-    Add a new education and then get all educations.
-
-    Check that it returns the new education in that list.
-    '''
+    """Add a new education and check if it's returned in the list."""
     example_education = {
         "course": "Engineering",
         "school": "NYU",
@@ -69,13 +58,8 @@ def test_education(client):
     assert get_response.json[item_id]['course'] == example_education['course']
     assert get_response.json[item_id]['school'] == example_education['school']
 
-
 def test_skill(client):
-    '''
-    Add a new skill and then get all skills.
-
-    Check that it returns the new skill in that list.
-    '''
+    """Add a new skill and check if it's returned in the list."""
     example_skill = {
         "name": "JavaScript",
         "proficiency": "2-4 years",
@@ -90,29 +74,21 @@ def test_skill(client):
     assert get_response.json[item_id]['name'] == example_skill['name']
     assert get_response.json[item_id]['proficiency'] == example_skill['proficiency']
 
-
-def test_post_user_information():
-    '''
-    Test the POST request for user information.
-    It should allow setting user information and return status code 201.
-    '''
+def test_post_user_information(client):
+    """Test the POST request for user information."""
     new_user_info = {
         "name": "John Doe",
         "email_address": "john@example.com",
         "phone_number": "+237680162416"
-
     }
-    response = app.test_client().post('/resume/user_information', json=new_user_info)
+    response = client.post('/resume/user_information', json=new_user_info)
     assert response.status_code == 201
     assert response.json['name'] == new_user_info['name']
     assert response.json['email_address'] == new_user_info['email_address']
     assert response.json['phone_number'] == new_user_info['phone_number']
 
-
 def test_validate_fields_all_present():
-    '''
-    Expect no missing fields
-    '''
+    """Expect no missing fields."""
     request_data = {
         "name": "John Doe",
         "email_address": "john@example.com",
@@ -120,36 +96,30 @@ def test_validate_fields_all_present():
     }
 
     result = validate_fields(
-        ["name", "email_address", "phone_number"], request_data)
+        ["name", "email_address", "phone_number"], request_data
+    )
 
     assert result == []
 
-
 def test_validate_fields_missing_field():
-    '''
-    Expect 'phone_number' to be missing
-    '''
+    """Expect 'phone_number' to be missing."""
     request_data = {
         "name": "John Doe",
         "email_address": "john@example.com"
     }
 
     result = validate_fields(
-        ["name", "email_address", "phone_number"], request_data)
+        ["name", "email_address", "phone_number"], request_data
+    )
 
     assert result == ["phone_number"]
 
-
 def test_valid_phone_number():
-    '''
-    Test a valid properly internationalized phone number returns True.
-    '''
+    """Test a valid properly internationalized phone number returns True."""
     valid_phone = "+14155552671"
     assert validate_phone_number(valid_phone) is True
 
 def test_invalid_phone_number():
-    '''
-    Test an invalid phone number returns False.
-    '''
+    """Test an invalid phone number returns False."""
     invalid_phone = "123456"
     assert validate_phone_number(invalid_phone) is False
