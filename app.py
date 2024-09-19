@@ -38,6 +38,13 @@ data = {
 }
 
 
+@app.route('/', strict_slashes=False)
+def index():
+    '''
+    Returns a welcome message for the app
+    '''
+    return "Welcome to MLH 24.FAL.A.2 Orientation API Project!!"
+
 @app.route('/test')
 def hello_world():
     '''
