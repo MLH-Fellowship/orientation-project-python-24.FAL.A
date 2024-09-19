@@ -147,28 +147,8 @@ def test_valid_phone_number():
     valid_phone = "+14155552671"
     assert validate_phone_number(valid_phone) is True
 
-
 def test_invalid_phone_number():
     '''
-<<<<<<< Tabnine <<<<<<<
-    def test_client():#+
-        """#+
-        This function tests the client endpoint of the application. It sends a GET request to '/test'#+
-        and verifies that the response status code is 200 and the message received is "Hello, World!".#+
-    #+
-        Parameters:#+
-        None#+
-    #+
-        Returns:#+
-        None#+
-    #+
-        Raises:#+
-        None#+
-        """#+
-        response = app.test_client().get('/test')#+
-        assert response.status_code == 200#+
-        assert response.json['message'] == "Hello, World!"#+
->>>>>>> Tabnine >>>>>>># {"conversationId":"5f5bba52-d20a-4fc0-93f1-d7943e31df71","source":"instruct"}
     Test an invalid phone number returns False.
     '''
     invalid_phone = "123456"
