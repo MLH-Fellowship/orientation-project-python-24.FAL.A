@@ -116,8 +116,6 @@ def education():
     '''
     Handles education requests
     '''
-    global data
-    
     if request.method == 'GET':
         return jsonify(data['education']), 200
 
