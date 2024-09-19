@@ -41,3 +41,13 @@ class Skill:
     name: str
     proficiency: str
     logo: str
+
+
+@dataclass
+class UserInformation:
+    '''
+    UserInformation Class
+    '''
+    name: str
+    email_address: str
+    phone_number: str
