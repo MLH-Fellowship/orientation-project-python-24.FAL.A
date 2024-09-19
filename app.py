@@ -52,7 +52,11 @@ def hello_world():
     '''
     return jsonify({"message": "Hello, World!"})
 
-
+def test_index(client):
+    """Test the index route"""
+    response = client.get('/')
+    assert response.status_code == 200
+    assert response.data == b"Welcome to MLH 24.FAL.A.2 Orientation API Project!!"
 @app.route('/resume/experience', methods=['GET', 'POST'])
 def experience():
     '''
