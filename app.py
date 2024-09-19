@@ -120,7 +120,7 @@ def education(index=None):
     if request.method == 'GET':
         if index is not None:
             if index < 0 or index >= len(data['education']):
-                return jsonify({'error': 'Index out of range'}), 404
+                return jsonify({'error': 'Education not found'}), 404
 
             education_entry = data['education'][index]
             return jsonify(education_entry), 200
