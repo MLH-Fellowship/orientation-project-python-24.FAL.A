@@ -118,9 +118,24 @@ def education():
     '''
     if request.method == 'GET':
         return jsonify({})
-
     if request.method == 'POST':
-        return jsonify({})
+        if not request.is_json:
+            return jsonify({'error': 'Request must be JSON'}), 400
+
+        required_fields = ['course', 'school', 'start_date', 'end_date', 'grade', 'logo']
+        missing_fields = validate_fields(required_fields, request.json)
+
+        if missing_fields:
+            return jsonify({'error': f'Missing required fields: {", ".join(missing_fields)}'}), 400
+
+        new_education = Education(**request.json)
+        data['education'].append(new_education)
+        new_education_index = len(data['education']) - 1
+
+        return jsonify({
+            'id': new_education_index
+        }), 201
+
 
     return jsonify({})
 
