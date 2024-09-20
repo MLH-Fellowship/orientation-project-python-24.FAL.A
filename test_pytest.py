@@ -125,24 +125,23 @@ def test_invalid_phone_number():
     assert validate_phone_number(invalid_phone) is False
 
 
-def test_delete_skill():
+def test_delete_skill(client):
     '''
     Test the skill deletion endpoint for skill ID bounds checking.
     '''
-    # Test some invalid skill indices (only index 0 is valid initially).
     for index in range(2, 5):
-        response = app.test_client().delete(f'/resume/skill/{index}')
+        response = client.delete(f'/resume/skill/{index}')
         assert response.status_code == 404
         assert response.json["error"] == "Skill not found"
 
     # Delete the only skills.
     for _ in range(2):
-        response = app.test_client().delete('/resume/skill/0')
+        response = client.delete('/resume/skill/0')
         assert response.status_code == 200
         assert response.json["message"] == "Skill successfully deleted"
 
-    # Now all skill indices should return Not Found.
     for index in range(0, 4):
-        response = app.test_client().delete(f'/resume/skill/{index}')
+        response = client.delete(f'/resume/skill/{index}')
         assert response.status_code == 404
         assert response.json["error"] == "Skill not found"
+
