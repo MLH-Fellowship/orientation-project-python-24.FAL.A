@@ -84,7 +84,6 @@ def hello_world():
     """
     return jsonify({"message": "Hello, World!"})
 
-
 @app.route("/resume/experience", methods=["GET", "POST"])
 def experience():
     """
@@ -94,19 +93,30 @@ def experience():
         return jsonify([exp.__dict__ for exp in data["experience"]]), 200
 
     if request.method == "POST":
-        request_body = request.form if request.content_type == "multipart/form-data" else request.get_json()
+        request_body = (
+            request.form if request.content_type == "multipart/form-data"
+            else request.get_json()
+        )
         if not request_body:
             return jsonify({"error": "Request must be JSON or include form data"}), 400
 
-        required_fields = {"title": str, "company": str, "start_date": str, "end_date": str, "description": str}
+        required_fields = {
+            "title": str,
+            "company": str,
+            "start_date": str,
+            "end_date": str,
+            "description": str,
+        }
         missing_fields, invalid_fields = handle_missing_invalid_fields(request_body, required_fields)
 
         if missing_fields or invalid_fields:
-            return jsonify({
-                "error": "Validation failed",
-                "missing_fields": missing_fields,
-                "invalid_fields": invalid_fields
-            }), 400
+            return jsonify(
+                {
+                    "error": "Validation failed",
+                    "missing_fields": missing_fields,
+                    "invalid_fields": invalid_fields,
+                }
+            ), 400
 
         # Handle logo file
         logo_filename = DEFAULT_LOGO

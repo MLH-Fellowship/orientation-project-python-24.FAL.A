@@ -30,7 +30,6 @@ def test_experience(client):
         "description": "Writing JavaScript Code",
         "logo": "default.jpg"
     }
-
     post_response = client.post('/resume/experience', json=example_experience)
     assert post_response.status_code == 201
     item_id = post_response.json['id']
@@ -49,7 +48,6 @@ def test_education(client):
         "grade": "86%",
         "logo": "default.jpg"
     }
-
     post_response = client.post('/resume/education', json=example_education)
     assert post_response.status_code == 201
     item_id = post_response.json['id']
@@ -94,7 +92,6 @@ def test_validate_fields_all_present():
         "email_address": "john@example.com",
         "phone_number": "+123456789"
     }
-
     result = validate_fields(
         ["name", "email_address", "phone_number"], request_data
     )
@@ -133,7 +130,6 @@ def test_delete_skill(client):
         response = client.delete(f'/resume/skill/{index}')
         assert response.status_code == 404
         assert response.json["error"] == "Skill not found"
-
     # Delete the only skills.
     for _ in range(2):
         response = client.delete('/resume/skill/0')
