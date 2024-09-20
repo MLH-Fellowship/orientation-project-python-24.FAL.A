@@ -8,7 +8,12 @@ from helpers import validate_fields, validate_phone_number
 
 @pytest.fixture(autouse=True)
 def before_each_test():
-    reset_data()  # Prevents tests from affecting the results of other tests.
+    """
+    Resets data before each test to ensure every test is independent of one another.
+    Runs before every test.
+    """
+    reset_data()
+
 
 def test_client():
     '''
@@ -149,20 +154,15 @@ def test_delete_skill():
     '''
     Test the skill deletion endpoint for skill ID bounds checking.
     '''
-    # Test some invalid skill indices (only index 0 is valid initially).
-    for index in range(2, 5):
-        response = app.test_client().delete(f'/resume/skill/{index}')
-        assert response.status_code == 404
-        assert response.json["error"] == "Skill not found"
+    # Attempt to delete a valid skill in between some invalid attempts.
+    for skill_indices, expected_status_code in [
+        (range(1, 5), 404), (range(0, 1), 200), (range(0, 5), 404)
+    ]:
+        for index in skill_indices:
+            response = app.test_client().delete(f'/resume/skill/{index}')
+            assert response.status_code == expected_status_code
 
-    # Delete the only skills.
-    for _ in range(2):
-        response = app.test_client().delete('/resume/skill/0')
-        assert response.status_code == 200
-        assert response.json["message"] == "Skill successfully deleted"
-
-    # Now all skill indices should return Not Found.
-    for index in range(0, 4):
-        response = app.test_client().delete(f'/resume/skill/{index}')
-        assert response.status_code == 404
-        assert response.json["error"] == "Skill not found"
+            if expected_status_code == 200:
+                assert response.json["message"] == "Skill successfully deleted"
+            else:
+                assert response.json["error"] == "Skill not found"
