@@ -1,9 +1,14 @@
 '''
 Tests in Pytest
 '''
-from app import app
+import pytest
+from app import app, reset_data
 from helpers import validate_fields, validate_phone_number
 
+
+@pytest.fixture(autouse=True)
+def before_each_test():
+    reset_data()  # Prevents tests from affecting the results of other tests.
 
 def test_client():
     '''
