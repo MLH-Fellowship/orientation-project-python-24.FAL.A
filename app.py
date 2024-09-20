@@ -23,7 +23,7 @@ def allowed_file(filename):
     :param filename: The name of the file to check
     :return: True if the file extension is allowed, False otherwise
     """
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 data = {
@@ -143,19 +143,42 @@ def experience():
     return jsonify({})
 
 
+@app.route("/resume/experience/<int:index>", methods=["GET"])
+def experience_by_index(index):
+    """
+    Handle experience requests by index
+    """
+    if 0 <= len(data["experience"]) and index < len(data["experience"]):
+        return jsonify(data["experience"][index])
+    return jsonify({"error": "Experience not found"}), 404
+
+
 @app.route("/resume/education", methods=["GET", "POST"])
-def education():
+@app.route("/resume/education/<int:index>", methods=["GET"])
+def education(index=None):
     """
     Handles education requests
     """
+    response = {}
+    status_code = 200
+
     if request.method == "GET":
-        return jsonify([edu.__dict__ for edu in data["education"]])
+        if index is not None:
+            if index < 0 or index >= len(data["education"]):
+                response = {"error": "Education not found"}
+                status_code = 404
+            else:
+                response = data["education"][index]
+        else:
+            response = [edu.__dict__ for edu in data["education"]]
+        return jsonify(response), status_code
 
     if request.method == "POST":
-        if request.content_type == "multipart/form-data":
-            request_body = request.form
-        else:
-            request_body = request.get_json()
+        request_body = (
+            request.form
+            if request.content_type == "multipart/form-data"
+            else request.get_json()
+        )
 
         if not request_body:
             return jsonify({"error": "Request must be JSON or include form data"}), 400
@@ -168,33 +191,26 @@ def education():
             "grade": str,
         }
 
-        missing_fields = []
-        invalid_fields = []
+        missing_fields = [
+            field for field in required_fields if field not in request_body
+        ]
+        invalid_fields = [
+            field
+            for field, field_type in required_fields.items()
+            if field in request_body and not isinstance(request_body[field], field_type)
+        ]
 
-        for field, field_type in required_fields.items():
-            if field not in request_body:
-                missing_fields.append(field)
-            elif not isinstance(request_body[field], field_type):
-                invalid_fields.append(field)
-
-        if missing_fields:
-            return (
-                jsonify(
-                    {
-                        "error": "Missing required fields",
-                        "missing_fields": missing_fields,
-                    }
-                ),
-                400,
-            )
-
-        if invalid_fields:
-            return (
-                jsonify(
-                    {"error": "Invalid field types", "invalid_fields": invalid_fields}
-                ),
-                400,
-            )
+        if missing_fields or invalid_fields:
+            response = {"error": ""}
+            if missing_fields:
+                response[
+                    "error"
+                ] += f"Missing required fields: {', '.join(missing_fields)}. "
+            if invalid_fields:
+                response[
+                    "error"
+                ] += f"Invalid field types: {', '.join(invalid_fields)}."
+            return jsonify(response), 400
 
         logo_filename = DEFAULT_LOGO
         if "logo" in request.files:
@@ -215,14 +231,13 @@ def education():
 
         data["education"].append(new_education)
 
-        return (
-            jsonify(
-                {"message": "New education created", "id": len(data["education"]) - 1}
-            ),
-            201,
-        )
+        response = {
+            "message": "New education created",
+            "id": len(data["education"]) - 1,
+        }
+        status_code = 201
 
-    return jsonify({})
+    return jsonify(response), status_code
 
 
 @app.route("/resume/skill", methods=["GET", "POST"])
@@ -234,6 +249,7 @@ def skill():
         return jsonify([sk.__dict__ for sk in data["skill"]])
 
     if request.method == "POST":
+
         if request.content_type == "multipart/form-data":
             request_body = request.form
         else:
