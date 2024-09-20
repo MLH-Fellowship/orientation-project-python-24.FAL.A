@@ -138,3 +138,16 @@ def test_invalid_phone_number():
     '''
     invalid_phone = "123456"
     assert validate_phone_number(invalid_phone) is False
+
+def test_post_skill():
+    skill_id = 0
+    new_skill = {
+        'name': 'Python',
+        'proficiency': 'Intermediate',
+        'logo': 'default.jpg'
+    }
+    response = app.test_client().put(f'/resume/skill?id={skill_id}', json=new_skill)
+    assert response.status_code == 200
+    assert response.json['name'] == new_skill['name']
+    assert response.json['proficiency'] == new_skill['proficiency']
+    assert response.json['logo'] == new_skill['logo']

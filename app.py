@@ -240,7 +240,7 @@ def education(index=None):
     return jsonify(response), status_code
 
 
-@app.route("/resume/skill", methods=["GET", "POST"])
+@app.route("/resume/skill", methods=["GET", "POST", "PUT"])
 def skill():
     """
     Handles Skill requests
@@ -307,6 +307,23 @@ def skill():
             201,
         )
 
+    if request.method == "PUT":
+        try:
+            skill_id = request.args.get('id')
+            if skill_id is None:
+                return jsonify({'error': 'Skill ID required'}), 400   
+            skill_id = int(skill_id)
+            if skill_id < 0 or skill_id >= len(data['skill']):
+                raise IndexError
+            error = validate_fields(['name', 'proficiency', 'logo'], request.json)
+            if error:
+                return jsonify({"error": ", ".join(error) + " parameter(s) is required"}), 400
+            data['skill'][skill_id] = request.json
+            return jsonify(data['skill'][skill_id]), 200
+        except ValueError:
+            return jsonify({'error': 'Invalid skill ID'}), 400    
+        except:
+            return jsonify({'error': 'Invalid request'}), 400
     return jsonify({})
 
 
