@@ -120,12 +120,18 @@ def experience_by_index(index):
     return jsonify({'error': 'Experience not found'}), 404
 
 @app.route('/resume/education', methods=['GET', 'POST'])
-def education():
+@app.route('/resume/education/<int:index>', methods=['GET'])
+def education(index=None):
     '''
     Handles education requests
     '''
     if request.method == 'GET':
-        return jsonify({})
+        if index is not None:
+            if index < 0 or index >= len(data['education']):
+                return jsonify({'error': 'Education not found'}), 404
+
+            education_entry = data['education'][index]
+            return jsonify(education_entry), 200
 
     if request.method == 'POST':
         return jsonify({})
