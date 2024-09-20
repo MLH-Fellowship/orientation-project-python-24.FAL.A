@@ -367,3 +367,16 @@ def user_information():
         return jsonify(data["user_information"]), 201
 
     return jsonify({"error": "Nothing changed"}), 400
+
+
+@app.route('/resume/skill/<int:index>', methods=['DELETE'])
+def delete_skill(index):
+    '''
+    Handles Skill deletion requests
+    '''
+    if not 0 <= index < len(data["skill"]):
+        return jsonify({"error": "Skill not found"}), 404
+
+    data["skill"].pop(index)
+
+    return jsonify({"message": "Skill successfully deleted"}), 200
