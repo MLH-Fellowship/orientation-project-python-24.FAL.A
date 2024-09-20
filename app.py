@@ -332,3 +332,12 @@ def user_information():
         return jsonify(data["user_information"]), 201
 
     return jsonify({"error": "Nothing changed"}), 400
+
+
+@app.route('/resume/skill', methods=['DELETE'])
+def delete_skill():
+    '''
+    Handles Skill deletion requests
+    '''
+
+    return jsonify({}), 200
