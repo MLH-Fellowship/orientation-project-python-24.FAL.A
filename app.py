@@ -131,9 +131,9 @@ def skill():
                     return jsonify(data['skill'][skill_id]), 200
                 raise ValueError
             else:
-                return jsonify({})
+                return jsonify({}), 404
         except:
-            return jsonify({'error': 'Invalid request'}), 404
+            return jsonify({'error': 'Invalid request'}), 400
 
     if request.method == 'POST':
         return jsonify({})
