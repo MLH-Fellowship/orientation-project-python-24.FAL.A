@@ -154,10 +154,10 @@ def experience_by_index(index):
 
 
 @app.route("/resume/education", methods=["GET", "POST"])
-@app.route("/resume/education/<int:index>", methods=["GET"])
+@app.route("/resume/education/<int:index>", methods=["GET", "PUT"])
 def education(index=None):
     """
-    Handles education requests
+    Handles education requests, including updating education by index.
     """
     response = {}
     status_code = 200
@@ -171,13 +171,10 @@ def education(index=None):
                 response = data["education"][index]
         else:
             response = [edu.__dict__ for edu in data["education"]]
-        return jsonify(response), status_code
 
-    if request.method == "POST":
+    elif request.method == "POST":
         request_body = (
-            request.form
-            if request.content_type == "multipart/form-data"
-            else request.get_json()
+            request.form if request.content_type == "multipart/form-data" else request.get_json()
         )
 
         if not request_body:
@@ -191,25 +188,18 @@ def education(index=None):
             "grade": str,
         }
 
-        missing_fields = [
-            field for field in required_fields if field not in request_body
-        ]
+        missing_fields = [field for field in required_fields if field not in request_body]
         invalid_fields = [
-            field
-            for field, field_type in required_fields.items()
+            field for field, field_type in required_fields.items()
             if field in request_body and not isinstance(request_body[field], field_type)
         ]
 
         if missing_fields or invalid_fields:
             response = {"error": ""}
             if missing_fields:
-                response[
-                    "error"
-                ] += f"Missing required fields: {', '.join(missing_fields)}. "
+                response["error"] += f"Missing required fields: {', '.join(missing_fields)}. "
             if invalid_fields:
-                response[
-                    "error"
-                ] += f"Invalid field types: {', '.join(invalid_fields)}."
+                response["error"] += f"Invalid field types: {', '.join(invalid_fields)}."
             return jsonify(response), 400
 
         logo_filename = DEFAULT_LOGO
@@ -228,14 +218,57 @@ def education(index=None):
             request_body["grade"],
             logo_filename,
         )
-
         data["education"].append(new_education)
 
-        response = {
-            "message": "New education created",
-            "id": len(data["education"]) - 1,
-        }
+        response = {"message": "New education created", "id": len(data["education"]) - 1}
         status_code = 201
+
+    elif request.method == "PUT":
+        if index is None or index < 0 or index >= len(data["education"]):
+            return jsonify({"error": "Education not found"}), 404
+
+        request_body = request.get_json()
+        if not request_body:
+            return jsonify({"error": "Request must be JSON"}), 400
+
+        required_fields = {
+            "course": str,
+            "school": str,
+            "start_date": str,
+            "end_date": str,
+            "grade": str,
+        }
+
+        missing_fields = [field for field in required_fields if field not in request_body]
+        invalid_fields = [
+            field for field, field_type in required_fields.items()
+            if field in request_body and not isinstance(request_body[field], field_type)
+        ]
+
+        if missing_fields or invalid_fields:
+            response = {"error": ""}
+            if missing_fields:
+                response["error"] += f"Missing required fields: {', '.join(missing_fields)}. "
+            if invalid_fields:
+                response["error"] += f"Invalid field types: {', '.join(invalid_fields)}."
+            return jsonify(response), 400
+
+        logo_filename = data["education"][index].logo
+        if "logo" in request.files:
+            logo_file = request.files["logo"]
+            if logo_file and allowed_file(logo_file.filename):
+                filename = secure_filename(logo_file.filename)
+                logo_file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+                logo_filename = filename
+
+        data["education"][index].course = request_body["course"]
+        data["education"][index].school = request_body["school"]
+        data["education"][index].start_date = request_body["start_date"]
+        data["education"][index].end_date = request_body["end_date"]
+        data["education"][index].grade = request_body["grade"]
+        data["education"][index].logo = logo_filename
+
+        return jsonify({"message": "Education updated", "id": index}), 200
 
     return jsonify(response), status_code
 
