@@ -5,7 +5,7 @@ Flask Application
 import os
 from werkzeug.utils import secure_filename
 from flask import Flask, jsonify, request
-from models import Experience, Education, Skill
+from models import Experience, Education, Skill, UserInformation
 from helpers import validate_fields, validate_phone_number
 
 UPLOAD_FOLDER = "uploads/"
@@ -14,6 +14,52 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+data = {}
+
+
+def reset_data():
+    """
+    Resets the values stored in data to placeholders.
+    """
+    data.clear()
+    data["experience"] = [
+        Experience(
+            "Software Developer",
+            "A Cool Company",
+            "October 2022",
+            "Present",
+            "Writing Python Code",
+            "example-logo.png",
+        ),
+    ]
+    data["education"] = [
+        Education(
+            "Computer Science",
+            "University of Tech",
+            "September 2019",
+            "July 2022",
+            "80%",
+            "example-logo.png",
+        ),
+    ]
+    data["skill"] = [
+        Skill(
+            "Python",
+            "1-2 Years",
+            "example-logo.png"
+        ),
+    ]
+    data["user_information"] = [
+        UserInformation(
+            "Joe Smith",
+            "example@gmail.com",
+            "+11234567890"
+        ),
+    ]
+
+
+reset_data()
 
 
 def allowed_file(filename):
@@ -24,32 +70,6 @@ def allowed_file(filename):
     :return: True if the file extension is allowed, False otherwise
     """
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-data = {
-    "experience": [
-        Experience(
-            "Software Developer",
-            "A Cool Company",
-            "October 2022",
-            "Present",
-            "Writing Python Code",
-            "example-logo.png",
-        )
-    ],
-    "education": [
-        Education(
-            "Computer Science",
-            "University of Tech",
-            "September 2019",
-            "July 2022",
-            "80%",
-            "example-logo.png",
-        )
-    ],
-    "skill": [Skill("Python", "1-2 Years", "example-logo.png")],
-    "user_information": {"name": "", "email_address": "", "phone_number": ""},
-}
 
 
 @app.route("/test")
