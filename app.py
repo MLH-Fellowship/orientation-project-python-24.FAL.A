@@ -76,21 +76,13 @@ def test_index(client):
 @app.route("/resume/experience", methods=["GET", "POST"])
 def experience():
     """
-    Handle experience requests
-    '''
-    if request.method == 'GET':
-        experience_list = [exp.__dict__ for exp in data['experience']]
-        return jsonify(experience_list), 200
-
-    if request.method == 'POST':
-        if not request.is_json:
-            return jsonify({'error': 'Request must be JSON'}), 400
+    Handle experience requests for GET and POST methods
     """
     if request.method == "GET":
-        return jsonify([exp.__dict__ for exp in data["experience"]])
+        experience_list = [exp.__dict__ for exp in data["experience"]]
+        return jsonify(experience_list), 200
 
     if request.method == "POST":
-
         if request.content_type == "multipart/form-data":
             request_body = request.form
         else:
@@ -127,24 +119,8 @@ def experience():
                 'error': 'Invalid field types',
                 'invalid_fields': invalid_fields
             }), 400
-            return (
-                jsonify(
-                    {
-                        "error": "Missing required fields",
-                        "missing_fields": missing_fields,
-                    }
-                ),
-                400,
-            )
 
-        if invalid_fields:
-            return (
-                jsonify(
-                    {"error": "Invalid field types", "invalid_fields": invalid_fields}
-                ),
-                400,
-            )
-
+        # Handle logo file
         logo_filename = DEFAULT_LOGO
         if "logo" in request.files:
             logo_file = request.files["logo"]
@@ -153,6 +129,7 @@ def experience():
                 logo_file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
                 logo_filename = filename
 
+        # Create new experience
         new_experience = Experience(
             request_body["title"],
             request_body["company"],
@@ -161,8 +138,8 @@ def experience():
             request_body["description"],
             logo_filename,
         )
-        data['experience'].append(new_experience)
-        new_experience_id = len(data['experience']) - 1
+        data["experience"].append(new_experience)
+        new_experience_id = len(data["experience"]) - 1
 
         return jsonify({
             'message': 'New experience created',
@@ -172,14 +149,13 @@ def experience():
 
 @app.route("/resume/education", methods=["GET", "POST"])
 def education():
-    '''
-    Handles education requests
-    '''
+    """
+    Handle education requests for GET and POST methods
+    """
     if request.method == 'GET':
         return jsonify([edu.__dict__ for edu in data['education']]), 200
 
     if request.method == 'POST':
-
         if not request.is_json:
             return jsonify({'error': 'Request must be JSON'}), 400
 
@@ -215,6 +191,7 @@ def education():
                 'invalid_fields': invalid_fields
             }), 400
 
+        # Create new education
         new_education = Education(
             request_body['course'],
             request_body['school'],
@@ -231,18 +208,6 @@ def education():
             'message': 'New education created',
             'id': new_education_id
         }), 201
-
-        data["experience"].append(new_experience)
-
-        new_experience_id = len(data["experience"]) - 1
-
-        return (
-            jsonify({"message": "New experience created", "id": new_experience_id}),
-            201,
-        )
-
-    return jsonify({})
-
 
 @app.route("/resume/experience/<int:index>", methods=["GET"])
 def experience_by_index(index):
