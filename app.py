@@ -146,7 +146,21 @@ def experience():
 @app.route("/resume/experience/<int:index>", methods=["GET"])
 def experience_by_index(index):
     """
-    Handle experience requests by index
+    Handle experience requests by index.
+    
+    Retrieves a specific experience entry from the `data["experience"]` list based on the index.
+    
+    If the index is valid (within the range of the experience list), it returns the corresponding
+    experience entry.
+    Otherwise, it returns a 404 error with a message indicating that the experience was not found.
+    
+    :param index: (int) The index of the experience entry to retrieve.
+    
+    :returns: 
+        - JSON response containing the experience entry if the index is valid.
+        - JSON response containing an error message if the index is out of range.
+        - HTTP status code 200 if successful, 404 if the experience is not found.
+    :rtype: tuple
     """
     if 0 <= len(data["experience"]) and index < len(data["experience"]):
         return jsonify(data["experience"][index])
@@ -157,7 +171,28 @@ def experience_by_index(index):
 @app.route("/resume/education/<int:index>", methods=["GET"])
 def education(index=None):
     """
-    Handles education requests
+    Handles education requests. Supports both GET and POST methods:
+    
+    - GET:
+        - Returns the full list of education records if no `index` is provided.
+        - Returns a specific education record if a valid `index` is provided.
+        - If the `index` is invalid, returns a 404 error.
+    
+    - POST:
+        - Adds a new education record to the database.
+        - Validates the required fields (`course`, `school`, `start_date`, `end_date`, `grade`)
+          and ensures they are present and of the correct type.
+        - If any fields are missing or invalid, returns a 400 error.
+        - Optionally accepts a `logo` file, which will be saved if it is a valid file.
+        - Returns a success message and the ID of the newly created record.
+
+    :param index: (int, optional) The index of the education record to retrieve. If not provided,
+    all records are returned. Defaults to None.
+    
+    :returns: JSON response containing the education data or error message, along with the HTTP
+    status code.
+
+    :rtype: tuple
     """
     response = {}
     status_code = 200
