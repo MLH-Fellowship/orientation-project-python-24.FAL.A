@@ -167,7 +167,7 @@ def education():
     return jsonify({})
 
 @app.route("/resume/education/<int:index>", methods=["GET"])
-def education(index=None):
+def education_by_index(index=None):
     """
     Handles education requests
     """
