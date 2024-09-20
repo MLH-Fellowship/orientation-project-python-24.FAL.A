@@ -152,7 +152,7 @@ def test_delete_skill():
 
     # Delete the only skills.
     for _ in range(2):
-        response = app.test_client().delete(f'/resume/skill/0')
+        response = app.test_client().delete('/resume/skill/0')
         assert response.status_code == 200
         assert response.json["message"] == "Skill successfully deleted"
 
