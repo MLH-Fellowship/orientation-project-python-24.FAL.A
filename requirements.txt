@@ -1,3 +1,5 @@
 flask
 pytest
 pylint
+phonenumbers
+werkzeug
