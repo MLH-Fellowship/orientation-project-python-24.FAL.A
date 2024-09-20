@@ -1,5 +1,5 @@
 """
-Flask Application
+Flask Application for Resume Management
 """
 
 import os
@@ -24,6 +24,23 @@ def allowed_file(filename):
     :return: True if the file extension is allowed, False otherwise
     """
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def handle_missing_invalid_fields(request_body, required_fields):
+    """
+    Check for missing and invalid fields in the request body.
+
+    :param request_body: The body of the request (either JSON or form data)
+    :param required_fields: A dictionary of field names and their expected types
+    :return: A tuple (missing_fields, invalid_fields)
+    """
+    missing_fields = [field for field in required_fields if field not in request_body]
+    invalid_fields = [
+        field
+        for field, field_type in required_fields.items()
+        if field in request_body and not isinstance(request_body[field], field_type)
+    ]
+    return missing_fields, invalid_fields
 
 
 data = {
@@ -52,13 +69,13 @@ data = {
 }
 
 
-
-@app.route('/', strict_slashes=False)
+@app.route("/", strict_slashes=False)
 def index():
-    '''
+    """
     Returns a welcome message for the app
-    '''
+    """
     return "Welcome to MLH 24.FAL.A.2 Orientation API Project!!"
+
 
 @app.route("/test")
 def hello_world():
@@ -67,11 +84,6 @@ def hello_world():
     """
     return jsonify({"message": "Hello, World!"})
 
-def test_index(client):
-    """Test the index route"""
-    response = client.get('/')
-    assert response.status_code == 200
-    assert response.data == b"Welcome to MLH 24.FAL.A.2 Orientation API Project!!"
 
 @app.route("/resume/experience", methods=["GET", "POST"])
 def experience():
@@ -79,45 +91,21 @@ def experience():
     Handle experience requests for GET and POST methods
     """
     if request.method == "GET":
-        experience_list = [exp.__dict__ for exp in data["experience"]]
-        return jsonify(experience_list), 200
+        return jsonify([exp.__dict__ for exp in data["experience"]]), 200
 
     if request.method == "POST":
-        if request.content_type == "multipart/form-data":
-            request_body = request.form
-        else:
-            request_body = request.get_json()
-
+        request_body = request.form if request.content_type == "multipart/form-data" else request.get_json()
         if not request_body:
             return jsonify({"error": "Request must be JSON or include form data"}), 400
 
-        required_fields = {
-            "title": str,
-            "company": str,
-            "start_date": str,
-            "end_date": str,
-            "description": str,
-        }
+        required_fields = {"title": str, "company": str, "start_date": str, "end_date": str, "description": str}
+        missing_fields, invalid_fields = handle_missing_invalid_fields(request_body, required_fields)
 
-        missing_fields = []
-        invalid_fields = []
-
-        for field, field_type in required_fields.items():
-            if field not in request_body:
-                missing_fields.append(field)
-            elif not isinstance(request_body[field], field_type):
-                invalid_fields.append(field)
-
-        if missing_fields:
+        if missing_fields or invalid_fields:
             return jsonify({
-                'error': 'Missing required fields',
-                'missing_fields': missing_fields
-            }), 400
-
-        if invalid_fields:
-            return jsonify({
-                'error': 'Invalid field types',
-                'invalid_fields': invalid_fields
+                "error": "Validation failed",
+                "missing_fields": missing_fields,
+                "invalid_fields": invalid_fields
             }), 400
 
         # Handle logo file
@@ -139,12 +127,7 @@ def experience():
             logo_filename,
         )
         data["experience"].append(new_experience)
-        new_experience_id = len(data["experience"]) - 1
-
-        return jsonify({
-            'message': 'New experience created',
-            'id': new_experience_id
-        }), 201
+        return jsonify({"message": "New experience created", "id": len(data["experience"]) - 1}), 201
 
 
 @app.route("/resume/education", methods=["GET", "POST"])
@@ -152,247 +135,81 @@ def education():
     """
     Handle education requests for GET and POST methods
     """
-    if request.method == 'GET':
-        return jsonify([edu.__dict__ for edu in data['education']]), 200
-
-    if request.method == 'POST':
-        if not request.is_json:
-            return jsonify({'error': 'Request must be JSON'}), 400
-
-        request_body = request.get_json()
-
-        required_fields = {
-            'course': str,
-            'school': str,
-            'start_date': str,
-            'end_date': str,
-            'grade': str,
-            'logo': str
-        }
-
-        missing_fields = []
-        invalid_fields = []
-
-        for field, field_type in required_fields.items():
-            if field not in request_body:
-                missing_fields.append(field)
-            elif not isinstance(request_body[field], field_type):
-                invalid_fields.append(field)
-
-        if missing_fields:
-            return jsonify({
-                'error': 'Missing required fields',
-                'missing_fields': missing_fields
-            }), 400
-
-        if invalid_fields:
-            return jsonify({
-                'error': 'Invalid field types',
-                'invalid_fields': invalid_fields
-            }), 400
-
-        # Create new education
-        new_education = Education(
-            request_body['course'],
-            request_body['school'],
-            request_body['start_date'],
-            request_body['end_date'],
-            request_body['grade'],
-            request_body['logo']
-        )
-
-        data['education'].append(new_education)
-        new_education_id = len(data['education']) - 1
-
-        return jsonify({
-            'message': 'New education created',
-            'id': new_education_id
-        }), 201
-
-@app.route("/resume/experience/<int:index>", methods=["GET"])
-def experience_by_index(index):
-    """
-    Handle experience requests by index.
-    
-    Retrieves a specific experience entry from the `data["experience"]` list based on the index.
-    
-    If the index is valid (within the range of the experience list), it returns the corresponding
-    experience entry.
-    Otherwise, it returns a 404 error with a message indicating that the experience was not found.
-    
-    :param index: (int) The index of the experience entry to retrieve.
-    
-    :returns: 
-        - JSON response containing the experience entry if the index is valid.
-        - JSON response containing an error message if the index is out of range.
-        - HTTP status code 200 if successful, 404 if the experience is not found.
-    :rtype: tuple
-    """
-    if 0 <= len(data["experience"]) and index < len(data["experience"]):
-        return jsonify(data["experience"][index])
-    return jsonify({"error": "Experience not found"}), 404
-
-
-@app.route("/resume/education/<int:index>", methods=["GET"])
-def education_by_index(index):
-    """
-    Handles education requests. Supports both GET and POST methods:
-    
-    - GET:
-        - Returns the full list of education records if no `index` is provided.
-        - Returns a specific education record if a valid `index` is provided.
-        - If the `index` is invalid, returns a 404 error.
-    
-    - POST:
-        - Adds a new education record to the database.
-        - Validates the required fields (`course`, `school`, `start_date`, `end_date`, `grade`)
-          and ensures they are present and of the correct type.
-        - If any fields are missing or invalid, returns a 400 error.
-        - Optionally accepts a `logo` file, which will be saved if it is a valid file.
-        - Returns a success message and the ID of the newly created record.
-
-    :param index: (int, optional) The index of the education record to retrieve. If not provided,
-    all records are returned. Defaults to None.
-    
-    :returns: JSON response containing the education data or error message, along with the HTTP
-    status code.
-
-    :rtype: tuple
-    """
-    response = {}
-    status_code = 200
-
     if request.method == "GET":
-        if index is not None:
-            if index < 0 or index >= len(data["education"]):
-                response = {"error": "Education not found"}
-                status_code = 404
-            else:
-                response = data["education"][index]
-        else:
-            response = [edu.__dict__ for edu in data["education"]]
-        return jsonify(response), status_code
+        return jsonify([edu.__dict__ for edu in data["education"]]), 200
 
     if request.method == "POST":
-        request_body = (
-            request.form
-            if request.content_type == "multipart/form-data"
-            else request.get_json()
-        )
-
+        request_body = request.get_json()
         if not request_body:
-            return jsonify({"error": "Request must be JSON or include form data"}), 400
+            return jsonify({"error": "Request must be JSON"}), 400
 
-        required_fields = {
-            "course": str,
-            "school": str,
-            "start_date": str,
-            "end_date": str,
-            "grade": str,
-        }
-
-        missing_fields = [
-            field for field in required_fields if field not in request_body
-        ]
-        invalid_fields = [
-            field
-            for field, field_type in required_fields.items()
-            if field in request_body and not isinstance(request_body[field], field_type)
-        ]
+        required_fields = {"course": str, "school": str, "start_date": str, "end_date": str, "grade": str}
+        missing_fields, invalid_fields = handle_missing_invalid_fields(request_body, required_fields)
 
         if missing_fields or invalid_fields:
-            response = {"error": ""}
-            if missing_fields:
-                response[
-                    "error"
-                ] += f"Missing required fields: {', '.join(missing_fields)}. "
-            if invalid_fields:
-                response[
-                    "error"
-                ] += f"Invalid field types: {', '.join(invalid_fields)}."
-            return jsonify(response), 400
+            return jsonify({
+                "error": "Validation failed",
+                "missing_fields": missing_fields,
+                "invalid_fields": invalid_fields
+            }), 400
 
-        logo_filename = DEFAULT_LOGO
-        if "logo" in request.files:
-            logo_file = request.files["logo"]
-            if logo_file and allowed_file(logo_file.filename):
-                filename = secure_filename(logo_file.filename)
-                logo_file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-                logo_filename = filename
-
+        # Create new education entry
         new_education = Education(
             request_body["course"],
             request_body["school"],
             request_body["start_date"],
             request_body["end_date"],
             request_body["grade"],
-            logo_filename,
+            DEFAULT_LOGO,
         )
-
         data["education"].append(new_education)
+        return jsonify({"message": "New education created", "id": len(data["education"]) - 1}), 201
 
-        response = {
-            "message": "New education created",
-            "id": len(data["education"]) - 1,
-        }
-        status_code = 201
 
-    return jsonify(response), status_code
+@app.route("/resume/experience/<int:index>", methods=["GET"])
+def experience_by_index(index):
+    """
+    Retrieve experience by index
+    """
+    if 0 <= index < len(data["experience"]):
+        return jsonify(data["experience"][index].__dict__), 200
+    return jsonify({"error": "Experience not found"}), 404
+
+
+@app.route("/resume/education/<int:index>", methods=["GET"])
+def education_by_index(index):
+    """
+    Retrieve education by index
+    """
+    if 0 <= index < len(data["education"]):
+        return jsonify(data["education"][index].__dict__), 200
+    return jsonify({"error": "Education not found"}), 404
 
 
 @app.route("/resume/skill", methods=["GET", "POST"])
 def skill():
-    '''
-    Handles skill requests
-    '''
-    if request.method == 'GET':
-        return jsonify([skill.__dict__ for skill in data['skill']]), 200
     """
-    Handles Skill requests
+    Handle skill requests
     """
     if request.method == "GET":
-        return jsonify([sk.__dict__ for sk in data["skill"]])
+        return jsonify([sk.__dict__ for sk in data["skill"]]), 200
 
     if request.method == "POST":
-
-        if request.content_type == "multipart/form-data":
-            request_body = request.form
-        else:
-            request_body = request.get_json()
-
+        request_body = request.form if request.content_type == "multipart/form-data" else request.get_json()
         if not request_body:
             return jsonify({"error": "Request must be JSON or include form data"}), 400
 
         required_fields = {"name": str, "proficiency": str}
+        missing_fields, invalid_fields = handle_missing_invalid_fields(request_body, required_fields)
 
-        missing_fields = []
-        invalid_fields = []
+        if missing_fields or invalid_fields:
+            return jsonify({
+                "error": "Validation failed",
+                "missing_fields": missing_fields,
+                "invalid_fields": invalid_fields
+            }), 400
 
-        for field, field_type in required_fields.items():
-            if field not in request_body:
-                missing_fields.append(field)
-            elif not isinstance(request_body[field], field_type):
-                invalid_fields.append(field)
-
-        if missing_fields:
-            return (
-                jsonify(
-                    {
-                        "error": "Missing required fields",
-                        "missing_fields": missing_fields,
-                    }
-                ),
-                400,
-            )
-
-        if invalid_fields:
-            return (
-                jsonify(
-                    {"error": "Invalid field types", "invalid_fields": invalid_fields}
-                ),
-                400,
-            )
-
+        # Handle logo file
         logo_filename = DEFAULT_LOGO
         if "logo" in request.files:
             logo_file = request.files["logo"]
@@ -401,68 +218,16 @@ def skill():
                 logo_file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
                 logo_filename = filename
 
-        new_skill = Skill(
-            request_body["name"], request_body["proficiency"], logo_filename
-        )
-
+        # Create new skill
+        new_skill = Skill(request_body["name"], request_body["proficiency"], logo_filename)
         data["skill"].append(new_skill)
-
-        return (
-            jsonify({"message": "New skill created", "id": len(data["skill"]) - 1}),
-            201,
-        )
-
-        if not request.is_json:
-            return jsonify({'error': 'Request must be JSON'}), 400
-
-        request_body = request.get_json()
-
-        required_fields = {
-            'name': str,
-            'proficiency': str,
-            'logo': str
-        }
-
-        missing_fields = []
-        invalid_fields = []
-
-        for field, field_type in required_fields.items():
-            if field not in request_body:
-                missing_fields.append(field)
-            elif not isinstance(request_body[field], field_type):
-                invalid_fields.append(field)
-
-        if missing_fields:
-            return jsonify({
-                'error': 'Missing required fields',
-                'missing_fields': missing_fields
-            }), 400
-
-        if invalid_fields:
-            return jsonify({
-                'error': 'Invalid field types',
-                'invalid_fields': invalid_fields
-            }), 400
-
-        new_skill = Skill(
-            request_body['name'],
-            request_body['proficiency'],
-            request_body['logo']
-        )
-
-        data['skill'].append(new_skill)
-        new_skill_id = len(data['skill']) - 1
-
-        return jsonify({
-            'message': 'New skill created',
-            'id': new_skill_id
-        }), 201
+        return jsonify({"message": "New skill created", "id": len(data["skill"]) - 1}), 201
 
 
 @app.route("/resume/user_information", methods=["GET", "POST", "PUT"])
 def user_information():
     """
-    Handles User Information requests
+    Handle user information requests
     """
     if request.method == "GET":
         return jsonify(data["user_information"]), 200
@@ -470,27 +235,22 @@ def user_information():
     error = validate_fields(["name", "email_address", "phone_number"], request.json)
 
     is_valid_phone_number = validate_phone_number(request.json["phone_number"])
-
     if not is_valid_phone_number:
         return jsonify({"error": "Invalid phone number"}), 400
     if error:
-        return jsonify({"error": ", ".join(error) + " parameter(s) is required"}), 400
+        return jsonify({"error": f"{', '.join(error)} parameter(s) is required"}), 400
 
     if request.method in ("POST", "PUT"):
         data["user_information"] = request.json
         return jsonify(data["user_information"]), 201
 
-    return jsonify({"error": "Nothing changed"}), 400
 
-
-@app.route('/resume/skill/<int:index>', methods=['DELETE'])
+@app.route("/resume/skill/<int:index>", methods=["DELETE"])
 def delete_skill(index):
-    '''
-    Handles Skill deletion requests
-    '''
-    if not 0 <= index < len(data["skill"]):
-        return jsonify({"error": "Skill not found"}), 404
-
-    data["skill"].pop(index)
-
-    return jsonify({"message": "Skill successfully deleted"}), 200
+    """
+    Delete skill by index
+    """
+    if 0 <= index < len(data["skill"]):
+        data["skill"].pop(index)
+        return jsonify({"message": "Skill successfully deleted"}), 200
+    return jsonify({"error": "Skill not found"}), 404
