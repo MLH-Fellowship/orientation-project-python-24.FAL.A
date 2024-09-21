@@ -292,9 +292,19 @@ def skill():
     """
     Handles Skill requests
     """
-    if request.method == "GET":
-        return jsonify([sk.__dict__ for sk in data["skill"]])
-
+    if request.method == 'GET':
+        try:
+            skill_id = request.args.get('id')
+            if skill_id is not None:
+                skill_id = int(skill_id)
+                if 0 <= skill_id < len(data['skill']):
+                    return jsonify(data['skill'][skill_id]), 200
+                raise ValueError
+            else:
+              return jsonify([sk.__dict__ for sk in data["skill"]])
+        except:
+            return jsonify({'error': 'Invalid request'}), 400
+         
     if request.method == "POST":
 
         if request.content_type == "multipart/form-data":
