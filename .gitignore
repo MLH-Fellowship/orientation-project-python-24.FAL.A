@@ -4,5 +4,7 @@
 __pycache__
 .vscode
 
+vop
+
 # Pycharm specific ignores
 .idea
