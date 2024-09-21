@@ -84,6 +84,7 @@ def hello_world():
     """
     return jsonify({"message": "Hello, World!"})
 
+
 @app.route("/resume/experience", methods=["GET", "POST"])
 def experience():
     """
@@ -142,31 +143,24 @@ def experience():
 
 @app.route("/resume/education", methods=["GET", "POST"])
 def education():
-    '''
-    Handles education requests
-    '''
+    """
+    Handles education requests for GET and POST methods
+    """
     if request.method == 'GET':
-        return jsonify(data['education']), 200
+        return jsonify([edu.__dict__ for edu in data['education']]), 200
 
     if request.method == 'POST':
-        return jsonify({})
-
-    return jsonify({})
-
-@app.route("/resume/education/<int:index>", methods=["GET"])
-def education_by_index(index=None):
-    """
-    Handle education requests for GET and POST methods
-    """
-    if request.method == "GET":
-        return jsonify([edu.__dict__ for edu in data["education"]]), 200
-
-    if request.method == "POST":
         request_body = request.get_json()
         if not request_body:
             return jsonify({"error": "Request must be JSON"}), 400
 
-        required_fields = {"course": str, "school": str, "start_date": str, "end_date": str, "grade": str}
+        required_fields = {
+            "course": str,
+            "school": str,
+            "start_date": str,
+            "end_date": str,
+            "grade": str
+        }
         missing_fields, invalid_fields = handle_missing_invalid_fields(request_body, required_fields)
 
         if missing_fields or invalid_fields:
@@ -185,8 +179,20 @@ def education_by_index(index=None):
             request_body["grade"],
             DEFAULT_LOGO,
         )
-        data["education"].append(new_education)
-        return jsonify({"message": "New education created", "id": len(data["education"]) - 1}), 201
+        data['education'].append(new_education)
+
+        return jsonify({"message": "New education created", "id": len(data['education']) - 1}), 201
+
+
+@app.route("/resume/education/<int:index>", methods=["GET"])
+def education_by_index(index):
+    """
+    Retrieve education by index
+    """
+    if 0 <= index < len(data["education"]):
+        return jsonify(data["education"][index].__dict__), 200
+    return jsonify({"error": "Education not found"}), 404
+
 
 @app.route("/resume/skill", methods=["GET", "POST"])
 def skill():
