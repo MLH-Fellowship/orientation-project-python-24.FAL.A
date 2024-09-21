@@ -65,7 +65,7 @@ data = {
         )
     ],
     "skill": [Skill("Python", "1-2 Years", "example-logo.png")],
-    "user_information": {"name": "", "email_address": "", "phone_number": ""},
+    "user_information": {"name": "", "email_address": "", "phone_number": ""}
 }
 
 
