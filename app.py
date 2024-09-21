@@ -155,7 +155,7 @@ def experience():
             logo_filename,
         )
         data["experience"].append(new_experience)
-        logging.info(f"New experience added: {new_experience.title}")
+        logging.info("New experience added: %s", new_experience.title)
         return (
             jsonify(
                 {
@@ -211,15 +211,8 @@ def education():
             DEFAULT_LOGO,
         )
         data['education'].append(new_education)
-        logging.info(f"New education added: {new_education.course}")
-        return (
-            jsonify({
-                "message": "New education created",
-                "id": len(data['education']) - 1
-            }),
-            201,
-        )
-
+        logging.info("New education added: %s", new_education.course)
+        return jsonify({"message": "New education created", "id": len(data['education']) - 1}), 201
 
 @app.route("/resume/education/<int:index>", methods=["GET"])
 def education_by_index(index):
@@ -281,7 +274,8 @@ def skill():
             logo_filename
         )
         data["skill"].append(new_skill)
-        logging.info(f"New skill added: {new_skill.name}")
+        logging.info("New skill added: %s", new_skill.name)
+
         return (
             jsonify({
                 "message": "New skill created",
@@ -323,17 +317,22 @@ def user_information():
         logging.info(f"User information updated for: {request_data['name']}")
         return jsonify(data["user_information"]), 201
 
-
-@app.route("/resume/skill/<int:index>", methods=["DELETE"])
-def delete_skill(index):
+@app.route("/resume/skill/<int:skill_index>", methods=["DELETE"])
+def delete_skill(skill_index):
     """
-    Delete skill by index
+    Delete a skill by its index.
+    
+    :param skill_index: The index of the skill to delete.
     """
-    if 0 <= index < len(data["skill"]):
-        removed_skill = data["skill"].pop(index)
-        logging.info(f"Skill deleted: {removed_skill.name}")
+    if 0 <= skill_index < len(data["skill"]):
+        removed_skill = data["skill"].pop(skill_index)
+        logging.info("Skill deleted: %s", removed_skill.name)
         return jsonify({"message": "Skill successfully deleted"}), 200
     return jsonify({"error": "Skill not found"}), 404
+
+
+
+
 
 
 if __name__ == "__main__":
