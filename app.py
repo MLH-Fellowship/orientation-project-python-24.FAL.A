@@ -188,17 +188,6 @@ def education_by_index(index=None):
         data["education"].append(new_education)
         return jsonify({"message": "New education created", "id": len(data["education"]) - 1}), 201
 
-
-@app.route("/resume/education/<int:index>", methods=["GET"])
-def education_by_index(index):
-    """
-    Retrieve education by index
-    """
-    if 0 <= index < len(data["education"]):
-        return jsonify(data["education"][index].__dict__), 200
-    return jsonify({"error": "Education not found"}), 404
-
-
 @app.route("/resume/skill", methods=["GET", "POST"])
 def skill():
     """
