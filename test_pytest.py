@@ -26,7 +26,7 @@ def test_experience():
         "start_date": "October 2022",
         "end_date": "Present",
         "description": "Writing JavaScript Code",
-        "logo": "example-logo.png"
+        "logo": "default.jpg"
     }
 
     item_id = app.test_client().post('/resume/experience',
@@ -47,7 +47,7 @@ def test_education():
         "start_date": "October 2022",
         "end_date": "August 2024",
         "grade": "86%",
-        "logo": "example-logo.png"
+        "logo": "default.jpg"
     }
     item_id = app.test_client().post('/resume/education',
                                      json=example_education).json['id']
@@ -65,7 +65,7 @@ def test_skill():
     example_skill = {
         "name": "JavaScript",
         "proficiency": "2-4 years",
-        "logo": "example-logo.png"
+        "logo": "default.jpg"
     }
 
     item_id = app.test_client().post('/resume/skill',
@@ -138,3 +138,26 @@ def test_invalid_phone_number():
     '''
     invalid_phone = "123456"
     assert validate_phone_number(invalid_phone) is False
+
+
+def test_delete_skill():
+    '''
+    Test the skill deletion endpoint for skill ID bounds checking.
+    '''
+    # Test some invalid skill indices (only index 0 is valid initially).
+    for index in range(2, 5):
+        response = app.test_client().delete(f'/resume/skill/{index}')
+        assert response.status_code == 404
+        assert response.json["error"] == "Skill not found"
+
+    # Delete the only skills.
+    for _ in range(2):
+        response = app.test_client().delete('/resume/skill/0')
+        assert response.status_code == 200
+        assert response.json["message"] == "Skill successfully deleted"
+
+    # Now all skill indices should return Not Found.
+    for index in range(0, 4):
+        response = app.test_client().delete(f'/resume/skill/{index}')
+        assert response.status_code == 404
+        assert response.json["error"] == "Skill not found"
