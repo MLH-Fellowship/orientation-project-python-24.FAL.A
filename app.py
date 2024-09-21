@@ -143,28 +143,90 @@ def experience():
     return jsonify({})
 
 
-@app.route("/resume/experience/<int:index>", methods=["GET"])
+@app.route("/resume/experience/<int:index>", methods=["GET", "PUT"])
 def experience_by_index(index):
     """
-    Handle experience requests by index.
+    - GET:
+        - Returns a specific experience entry if a valid `index` is provided.
+        - If the `index` is invalid, returns a 404 error.
     
-    Retrieves a specific experience entry from the `data["experience"]` list based on the index.
-    
-    If the index is valid (within the range of the experience list), it returns the corresponding
-    experience entry.
-    Otherwise, it returns a 404 error with a message indicating that the experience was not found.
-    
-    :param index: (int) The index of the experience entry to retrieve.
-    
-    :returns: 
-        - JSON response containing the experience entry if the index is valid.
-        - JSON response containing an error message if the index is out of range.
-        - HTTP status code 200 if successful, 404 if the experience is not found.
+    - PUT:
+        - Updates an existing experience entry.
+        - Validates the required fields 
+          (`title`, `company`, `start_date`, `end_date`, `description`)
+          and ensures they are present and of the correct type.
+        - If any fields are missing or invalid, returns a 400 error.
+        - Optionally accepts a `logo` file, which will be saved if it is a valid file.
+        - Returns a success message and the ID of the updated record.
+
+    :param index: (int) The index of the experience record to retrieve.
+
+    :returns: JSON response containing the experience data or error message, along with the HTTP
+    status code.
+
     :rtype: tuple
     """
-    if 0 <= len(data["experience"]) and index < len(data["experience"]):
-        return jsonify(data["experience"][index])
-    return jsonify({"error": "Experience not found"}), 404
+    if request.method == "GET":
+        if 0 <= len(data["experience"]) and index < len(data["experience"]):
+            return jsonify(data["experience"][index])
+        return jsonify({"error": "Experience not found"}), 404
+    if request.method == "PUT":
+        if request.content_type == "multipart/form-data":
+            request_body = request.form
+        else:
+            request_body = request.get_json()
+
+        if not request_body:
+            return jsonify({"error": "Request must be JSON or include form data"}), 400
+
+        required_fields = {
+            "title": str,
+            "company": str,
+            "start_date": str,
+            "end_date": str,
+            "description": str,
+        }
+
+        missing_fields = [
+            field for field in required_fields if field not in request_body
+        ]
+        invalid_fields = [
+            field
+            for field, field_type in required_fields.items()
+            if field in request_body and not isinstance(request_body[field], field_type)
+        ]
+
+        if missing_fields or invalid_fields:
+            response = {"error": ""}
+            if missing_fields:
+                response[
+                    "error"
+                ] += f"Missing required fields: {', '.join(missing_fields)}. "
+            if invalid_fields:
+                response[
+                    "error"
+                ] += f"Invalid field types: {', '.join(invalid_fields)}."
+            return jsonify(response), 400
+
+        logo_filename = DEFAULT_LOGO
+        if "logo" in request.files:
+            logo_file = request.files["logo"]
+            if logo_file and allowed_file(logo_file.filename):
+                filename = secure_filename(logo_file.filename)
+                logo_file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+                logo_filename = filename
+
+        data["experience"][index] = Experience(
+            request_body["title"],
+            request_body["company"],
+            request_body["start_date"],
+            request_body["end_date"],
+            request_body["description"],
+            logo_filename,
+        )
+
+        return jsonify({"message": "Experience updated", "id": index}), 200
+    return jsonify({}), 400
 
 
 @app.route("/resume/education", methods=["GET", "POST"])
@@ -293,20 +355,17 @@ def skill():
     Handles Skill requests
     """
     if request.method == 'GET':
+        skill_id = request.args.get('id')
+        if skill_id is None:
+            return jsonify([sk.__dict__ for sk in data["skill"]]), 200
         try:
-            skill_id = request.args.get('id')
-            if skill_id is not None:
-                skill_id = int(skill_id)
-                if 0 <= skill_id < len(data['skill']):
-                    return jsonify(data['skill'][skill_id]), 200
-                raise ValueError
-            else:
-              return jsonify([sk.__dict__ for sk in data["skill"]])
-        except:
+            skill_id = int(skill_id)
+        except ValueError:
             return jsonify({'error': 'Invalid request'}), 400
-         
-    if request.method == "POST":
+        if 0 <= skill_id < len(data['skill']):
+            return jsonify(data['skill'][skill_id]), 200
 
+    if request.method == "POST":
         if request.content_type == "multipart/form-data":
             request_body = request.form
         else:
