@@ -168,8 +168,20 @@ def experience_by_index(index):
 
 
 @app.route("/resume/education", methods=["GET", "POST"])
+def education():
+    '''
+    Handles education requests
+    '''
+    if request.method == 'GET':
+        return jsonify(data['education']), 200
+
+    if request.method == 'POST':
+        return jsonify({})
+
+    return jsonify({})
+
 @app.route("/resume/education/<int:index>", methods=["GET"])
-def education(index=None):
+def education_by_index(index=None):
     """
     Handles education requests. Supports both GET and POST methods:
     
