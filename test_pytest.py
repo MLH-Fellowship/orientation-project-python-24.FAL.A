@@ -163,7 +163,7 @@ def test_delete_skill():
         assert response.json["error"] == "Skill not found"
 
 
-def test_upade_experience():
+def test_upgrade_experience():
     '''
     Test the update experience endpoint for experience ID bounds checking.
     Updates the only experience and check if the update was successful.
@@ -184,5 +184,4 @@ def test_upade_experience():
         "logo": "default.jpg"
     }
     response = app.test_client().put('/resume/experience/0', json=new_example_experience)
-    assert response.status_code == 200
-    assert response.json["message"] == "Experience updated"
+    assert response.status_code == 204

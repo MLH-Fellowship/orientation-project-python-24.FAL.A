@@ -179,34 +179,11 @@ def experience_by_index(index):
         if not request_body:
             return jsonify({"error": "Request must be JSON or include form data"}), 400
 
-        required_fields = {
-            "title": str,
-            "company": str,
-            "start_date": str,
-            "end_date": str,
-            "description": str,
-        }
+        error = validate_fields(["title", "company", "start_date", "end_date", "description"],
+                                 request_body)
 
-        missing_fields = [
-            field for field in required_fields if field not in request_body
-        ]
-        invalid_fields = [
-            field
-            for field, field_type in required_fields.items()
-            if field in request_body and not isinstance(request_body[field], field_type)
-        ]
-
-        if missing_fields or invalid_fields:
-            response = {"error": ""}
-            if missing_fields:
-                response[
-                    "error"
-                ] += f"Missing required fields: {', '.join(missing_fields)}. "
-            if invalid_fields:
-                response[
-                    "error"
-                ] += f"Invalid field types: {', '.join(invalid_fields)}."
-            return jsonify(response), 400
+        if error:
+            return jsonify({"error": ", ".join(error) + " parameter(s) is required"}), 400
 
         logo_filename = DEFAULT_LOGO
         if "logo" in request.files:
@@ -225,7 +202,7 @@ def experience_by_index(index):
             logo_filename,
         )
 
-        return jsonify({"message": "Experience updated", "id": index}), 200
+        return jsonify({"message": "Experience updated", "id": index}), 204
     return jsonify({}), 400
 
 
