@@ -8,7 +8,10 @@ from werkzeug.utils import secure_filename
 from flask import Flask, jsonify, request
 from models import Experience, Education, Skill
 from helpers import validate_fields, validate_phone_number
+from spellchecker import SpellChecker
 
+
+spell = SpellChecker()
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
@@ -19,6 +22,11 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
+data = {
+    "experience": [],
+    "education": [],
+    "skill": [],
+}
 
 def allowed_file(filename):
     """
@@ -259,7 +267,6 @@ def skill():
             201,
         )
 
-
 @app.route("/resume/user_information", methods=["GET", "POST", "PUT"])
 def user_information():
     """
@@ -304,6 +311,46 @@ def delete_skill(skill_index):
         logging.info("Skill deleted: %s", removed_skill.name)
         return jsonify({"message": "Skill successfully deleted"}), 200
     return jsonify({"error": "Skill not found"}), 404
+
+@app.route("/resume/spellcheck", methods=["POST"])
+def spellcheck():
+    request_body = request.get_json()
+    if not request_body:
+        return jsonify({"error": "Request must be JSON"}), 400
+
+    results = []
+
+    for exp in request_body.get("experience", []):
+        title = exp.get("title", "")
+        description = exp.get("description", "")
+        if title:
+            results.append({
+                "before": title,
+                "after": list(spell.candidates(title)) if spell.candidates(title) else []
+            })
+        if description:
+            results.append({
+                "before": description,
+                "after": list(spell.candidates(description)) if spell.candidates(description) else []
+            })
+
+    for edu in request_body.get("education", []):
+        course = edu.get("course", "")
+        if course:
+            results.append({
+                "before": course,
+                "after": list(spell.candidates(course)) if spell.candidates(course) else []
+            })
+
+    for sk in request_body.get("skill", []):
+        name = sk.get("name", "")
+        if name:
+            results.append({
+                "before": name,
+                "after": list(spell.candidates(name)) if spell.candidates(name) else []
+            })
+
+    return jsonify(results), 200
 
 
 

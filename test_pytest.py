@@ -1,12 +1,43 @@
 import pytest
 from app import app
 from helpers import validate_fields, validate_phone_number
+from app import app, data 
+from models import Experience, Education, Skill 
 
 @pytest.fixture
 def client():
     """Fixture for creating a test client."""
     with app.test_client() as client:
         yield client
+
+@pytest.fixture(autouse=True)
+def reset_data():
+    """Reset the data to its initial state before each test."""
+    global data
+    data = {
+        "experience": [
+            Experience(
+                "Software Developer",
+                "A Cool Company",
+                "October 2022",
+                "Present",
+                "Writing Python Code",
+                "example-logo.png",
+            )
+        ],
+        "education": [
+            Education(
+                "Computer Science",
+                "University of Tech",
+                "September 2019",
+                "July 2022",
+                "80%",
+                "example-logo.png",
+            )
+        ],
+        "skill": [Skill("Python", "1-2 Years", "example-logo.png")],
+        "user_information": {"name": "", "email_address": "", "phone_number": ""},
+    }
 
 def test_index(client):
     """Test the index route."""
@@ -140,4 +171,55 @@ def test_delete_skill(client):
         response = client.delete(f'/resume/skill/{index}')
         assert response.status_code == 404
         assert response.json["error"] == "Skill not found"
+
+def test_spellcheck(client):
+    """Test the spell check endpoint."""
+    # Adding sample data with spelling errors
+    data["experience"].append(Experience(
+        "Software Develper",  # Intentional typo
+        "A Cool Company",
+        "October 2022",
+        "Present",
+        "Writting Python Code",  # Intentional typo
+        "example-logo.png"
+    ))
+
+    data["education"].append(Education(
+        "Comptuer Science",  
+        "University of Tech",
+        "September 2019",
+        "July 2022",
+        "80%",
+        "example-logo.png"
+    ))
+
+    data["skill"].append(Skill("Pythn", "1-2 Years", "example-logo.png"))  
+
+    # Prepare a request body for spellcheck
+    request_body = {
+        "experience": [
+            {"title": "Software Develper", "description": "Writting Python Code"}
+        ],
+        "education": [
+            {"course": "Comptuer Science"}
+        ],
+        "skill": [
+            {"name": "Pythn"}
+        ]
+    }
+
+    response = client.post('/resume/spellcheck', json=request_body)
+    assert response.status_code == 200
+    results = response.json
+
+    # Check for corrections
+    assert any(r["before"] == "Software Develper" for r in results)
+    assert any(r["after"] != "Software Develper" for r in results)
+    assert any(r["before"] == "Writting Python Code" for r in results)
+    assert any(r["after"] != "Writting Python Code" for r in results)
+    assert any(r["before"] == "Comptuer Science" for r in results)
+    assert any(r["after"] != "Comptuer Science" for r in results)
+    assert any(r["before"] == "Pythn" for r in results)
+    assert any(r["after"] != "Pythn" for r in results)
+    assert any(isinstance(r["after"], list) and len(r["after"]) > 0 for r in results)
 
