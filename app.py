@@ -3,10 +3,14 @@ Flask Application for Resume Management
 """
 
 import os
+import logging
 from werkzeug.utils import secure_filename
 from flask import Flask, jsonify, request
 from models import Experience, Education, Skill
 from helpers import validate_fields, validate_phone_number
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
 UPLOAD_FOLDER = "uploads/"
 DEFAULT_LOGO = "default.jpg"
@@ -23,7 +27,10 @@ def allowed_file(filename):
     :param filename: The name of the file to check
     :return: True if the file extension is allowed, False otherwise
     """
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+    return (
+        "." in filename
+        and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+    )
 
 
 def handle_missing_invalid_fields(request_body, required_fields):
@@ -34,7 +41,9 @@ def handle_missing_invalid_fields(request_body, required_fields):
     :param required_fields: A dictionary of field names and their expected types
     :return: A tuple (missing_fields, invalid_fields)
     """
-    missing_fields = [field for field in required_fields if field not in request_body]
+    missing_fields = [
+        field for field in required_fields if field not in request_body
+    ]
     invalid_fields = [
         field
         for field, field_type in required_fields.items()
@@ -65,7 +74,7 @@ data = {
         )
     ],
     "skill": [Skill("Python", "1-2 Years", "example-logo.png")],
-    "user_information": {"name": "", "email_address": "", "phone_number": ""}
+    "user_information": {"name": "", "email_address": "", "phone_number": ""},
 }
 
 
@@ -99,7 +108,10 @@ def experience():
             else request.get_json()
         )
         if not request_body:
-            return jsonify({"error": "Request must be JSON or include form data"}), 400
+            return (
+                jsonify({"error": "Request must be JSON or include form data"}),
+                400,
+            )
 
         required_fields = {
             "title": str,
@@ -108,16 +120,21 @@ def experience():
             "end_date": str,
             "description": str,
         }
-        missing_fields, invalid_fields = handle_missing_invalid_fields(request_body, required_fields)
+        missing_fields, invalid_fields = handle_missing_invalid_fields(
+            request_body, required_fields
+        )
 
         if missing_fields or invalid_fields:
-            return jsonify(
-                {
-                    "error": "Validation failed",
-                    "missing_fields": missing_fields,
-                    "invalid_fields": invalid_fields,
-                }
-            ), 400
+            return (
+                jsonify(
+                    {
+                        "error": "Validation failed",
+                        "missing_fields": missing_fields,
+                        "invalid_fields": invalid_fields,
+                    }
+                ),
+                400,
+            )
 
         # Handle logo file
         logo_filename = DEFAULT_LOGO
@@ -138,7 +155,16 @@ def experience():
             logo_filename,
         )
         data["experience"].append(new_experience)
-        return jsonify({"message": "New experience created", "id": len(data["experience"]) - 1}), 201
+        logging.info(f"New experience added: {new_experience.title}")
+        return (
+            jsonify(
+                {
+                    "message": "New experience created",
+                    "id": len(data["experience"]) - 1,
+                }
+            ),
+            201,
+        )
 
 
 @app.route("/resume/education", methods=["GET", "POST"])
@@ -161,14 +187,19 @@ def education():
             "end_date": str,
             "grade": str
         }
-        missing_fields, invalid_fields = handle_missing_invalid_fields(request_body, required_fields)
+        missing_fields, invalid_fields = handle_missing_invalid_fields(
+            request_body, required_fields
+        )
 
         if missing_fields or invalid_fields:
-            return jsonify({
-                "error": "Validation failed",
-                "missing_fields": missing_fields,
-                "invalid_fields": invalid_fields
-            }), 400
+            return (
+                jsonify({
+                    "error": "Validation failed",
+                    "missing_fields": missing_fields,
+                    "invalid_fields": invalid_fields
+                }),
+                400,
+            )
 
         # Create new education entry
         new_education = Education(
@@ -180,8 +211,14 @@ def education():
             DEFAULT_LOGO,
         )
         data['education'].append(new_education)
-
-        return jsonify({"message": "New education created", "id": len(data['education']) - 1}), 201
+        logging.info(f"New education added: {new_education.course}")
+        return (
+            jsonify({
+                "message": "New education created",
+                "id": len(data['education']) - 1
+            }),
+            201,
+        )
 
 
 @app.route("/resume/education/<int:index>", methods=["GET"])
@@ -201,21 +238,32 @@ def skill():
     """
     if request.method == "GET":
         return jsonify([sk.__dict__ for sk in data["skill"]]), 200
-         
+
     if request.method == "POST":
-        request_body = request.form if request.content_type == "multipart/form-data" else request.get_json()
+        request_body = (
+            request.form if request.content_type == "multipart/form-data"
+            else request.get_json()
+        )
         if not request_body:
-            return jsonify({"error": "Request must be JSON or include form data"}), 400
+            return (
+                jsonify({"error": "Request must be JSON or include form data"}),
+                400,
+            )
 
         required_fields = {"name": str, "proficiency": str}
-        missing_fields, invalid_fields = handle_missing_invalid_fields(request_body, required_fields)
+        missing_fields, invalid_fields = handle_missing_invalid_fields(
+            request_body, required_fields
+        )
 
         if missing_fields or invalid_fields:
-            return jsonify({
-                "error": "Validation failed",
-                "missing_fields": missing_fields,
-                "invalid_fields": invalid_fields
-            }), 400
+            return (
+                jsonify({
+                    "error": "Validation failed",
+                    "missing_fields": missing_fields,
+                    "invalid_fields": invalid_fields
+                }),
+                400,
+            )
 
         # Handle logo file
         logo_filename = DEFAULT_LOGO
@@ -227,9 +275,20 @@ def skill():
                 logo_filename = filename
 
         # Create new skill
-        new_skill = Skill(request_body["name"], request_body["proficiency"], logo_filename)
+        new_skill = Skill(
+            request_body["name"],
+            request_body["proficiency"],
+            logo_filename
+        )
         data["skill"].append(new_skill)
-        return jsonify({"message": "New skill created", "id": len(data["skill"]) - 1}), 201
+        logging.info(f"New skill added: {new_skill.name}")
+        return (
+            jsonify({
+                "message": "New skill created",
+                "id": len(data["skill"]) - 1
+            }),
+            201,
+        )
 
 
 @app.route("/resume/user_information", methods=["GET", "POST", "PUT"])
@@ -240,16 +299,28 @@ def user_information():
     if request.method == "GET":
         return jsonify(data["user_information"]), 200
 
-    error = validate_fields(["name", "email_address", "phone_number"], request.json)
-
-    is_valid_phone_number = validate_phone_number(request.json["phone_number"])
-    if not is_valid_phone_number:
-        return jsonify({"error": "Invalid phone number"}), 400
-    if error:
-        return jsonify({"error": f"{', '.join(error)} parameter(s) is required"}), 400
-
     if request.method in ("POST", "PUT"):
-        data["user_information"] = request.json
+        request_data = request.json
+        if not request_data:
+            return jsonify({"error": "Request must be JSON"}), 400
+
+        error = validate_fields(
+            ["name", "email_address", "phone_number"], request_data
+        )
+        if error:
+            return (
+                jsonify({"error": f"{', '.join(error)} parameter(s) is required"}),
+                400,
+            )
+
+        is_valid_phone_number = validate_phone_number(
+            request_data["phone_number"]
+        )
+        if not is_valid_phone_number:
+            return jsonify({"error": "Invalid phone number"}), 400
+
+        data["user_information"] = request_data
+        logging.info(f"User information updated for: {request_data['name']}")
         return jsonify(data["user_information"]), 201
 
 
@@ -259,6 +330,13 @@ def delete_skill(index):
     Delete skill by index
     """
     if 0 <= index < len(data["skill"]):
-        data["skill"].pop(index)
+        removed_skill = data["skill"].pop(index)
+        logging.info(f"Skill deleted: {removed_skill.name}")
         return jsonify({"message": "Skill successfully deleted"}), 200
     return jsonify({"error": "Skill not found"}), 404
+
+
+if __name__ == "__main__":
+    if not os.path.exists(UPLOAD_FOLDER):
+        os.makedirs(UPLOAD_FOLDER)
+    app.run(debug=True)
