@@ -142,6 +142,19 @@ def experience():
 
 @app.route("/resume/education", methods=["GET", "POST"])
 def education():
+    '''
+    Handles education requests
+    '''
+    if request.method == 'GET':
+        return jsonify(data['education']), 200
+
+    if request.method == 'POST':
+        return jsonify({})
+
+    return jsonify({})
+
+@app.route("/resume/education/<int:index>", methods=["GET"])
+def education_by_index(index=None):
     """
     Handle education requests for GET and POST methods
     """
@@ -203,7 +216,7 @@ def skill():
     """
     if request.method == "GET":
         return jsonify([sk.__dict__ for sk in data["skill"]]), 200
-
+         
     if request.method == "POST":
         request_body = request.form if request.content_type == "multipart/form-data" else request.get_json()
         if not request_body:
