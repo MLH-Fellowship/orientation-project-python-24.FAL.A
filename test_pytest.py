@@ -141,3 +141,26 @@ def test_delete_skill(client):
         assert response.status_code == 404
         assert response.json["error"] == "Skill not found"
 
+
+def test_upgrade_experience():
+    '''
+    Test the update experience endpoint for experience ID bounds checking.
+    Updates the only experience and check if the update was successful.
+    Check if the previous experience is not found.
+    '''
+    # Test some invalid experience indices (only index 0 is valid initially).
+    for index in range(2, 5):
+        response = app.test_client().put(f'/resume/experience/{index}')
+        assert response.status_code == 400
+
+    # Update the only experience.
+    new_example_experience = {
+        "title": "Software Developer",
+        "company": "A Cooler Company",
+        "start_date": "October 2022",
+        "end_date": "Present",
+        "description": "Writing JavaScript Code",
+        "logo": "default.jpg"
+    }
+    response = app.test_client().put('/resume/experience/0', json=new_example_experience)
+    assert response.status_code == 204
