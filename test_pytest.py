@@ -203,7 +203,7 @@ def test_spellcheck(client):
 
     data["skill"].append(Skill("Pythn", "1-2 Years", "example-logo.png"))  
 
-    # Prepare a request body for spellcheck
+    # Request body for spellcheck
     request_body = {
         "experience": [
             {"title": "Software Develper", "description": "Writting Python Code"}
