@@ -5,7 +5,7 @@ Flask Application for Resume Management
 import os
 import logging
 from werkzeug.utils import secure_filename
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from models import Experience, Education, Skill
 from helpers import validate_fields, validate_phone_number
 
@@ -483,3 +483,10 @@ if __name__ == "__main__":
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
     app.run(debug=True)
+
+@app.route('/uploads/<path:filename>')
+def uploaded_file(filename):
+    """
+    Function for serving uploaded files from /uploads.
+    """
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
