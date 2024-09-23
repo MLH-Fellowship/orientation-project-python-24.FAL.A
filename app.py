@@ -311,7 +311,7 @@ def skill():
         try:
             skill_id = request.args.get('id')
             if skill_id is None:
-                return jsonify({'error': 'Skill ID required'}), 400   
+                return jsonify({'error': 'Skill not found'}), 400   
             skill_id = int(skill_id)
             if skill_id < 0 or skill_id >= len(data['skill']):
                 raise IndexError
@@ -321,7 +321,7 @@ def skill():
             data['skill'][skill_id] = request.json
             return jsonify(data['skill'][skill_id]), 200
         except ValueError:
-            return jsonify({'error': 'Invalid skill ID'}), 400    
+            return jsonify({'error': 'Skill not found'}), 400    
         except:
             return jsonify({'error': 'Invalid request'}), 400
     return jsonify({})
