@@ -2,9 +2,9 @@
 Tests in Pytest
 """
 
+import io
 from app import app
 from helpers import validate_fields, validate_phone_number
-import io
 
 
 def test_client():
@@ -119,11 +119,13 @@ def test_post_skill_with_logo():
     data = {
         "name": "JavaScript",
         "proficiency": "2-4 years",
+    }
+    file_data = {
         "logo": (io.BytesIO(b"fake image data"), "logo.png"),
     }
 
     response = app.test_client().post(
-        "/resume/skill", data=data, content_type="multipart/form-data"
+        "/resume/skill", data={**data, **file_data}, content_type="multipart/form-data"
     )
     assert response.status_code == 201
     assert response.json["message"] == "New skill created"

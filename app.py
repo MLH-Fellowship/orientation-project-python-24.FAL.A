@@ -441,12 +441,12 @@ def handle_get_skill():
     """
     skill_id = request.args.get("id")
     if skill_id is None:
-        return jsonify(data["skill"]), 200
+        return jsonify([skill.__dict__ for skill in data["skill"]]), 200
 
     try:
         skill_id = int(skill_id)
         if 0 <= skill_id < len(data["skill"]):
-            return jsonify(data["skill"][skill_id]), 200
+            return jsonify(data["skill"][skill_id].__dict__), 200
         return jsonify({"error": "Skill not found"}), 404
     except ValueError:
         return jsonify({"error": "Invalid request"}), 400
@@ -504,17 +504,14 @@ def handle_put_skill():
         if not request_body:
             return jsonify({"error": "Request must be JSON"}), 400
 
-        data["skill"][skill_id]["name"] = request_body.get(
-            "name", data["skill"][skill_id]["name"]
+        existing_skill = data["skill"][skill_id]
+        existing_skill.name = request_body.get("name", existing_skill.name)
+        existing_skill.proficiency = request_body.get(
+            "proficiency", existing_skill.proficiency
         )
-        data["skill"][skill_id]["proficiency"] = request_body.get(
-            "proficiency", data["skill"][skill_id]["proficiency"]
-        )
-        data["skill"][skill_id]["logo"] = request_body.get(
-            "logo", data["skill"][skill_id]["logo"]
-        )
+        existing_skill.logo = request_body.get("logo", existing_skill.logo)
 
-        return jsonify(data["skill"][skill_id]), 200
+        return jsonify(existing_skill.__dict__), 200
 
     return jsonify({"error": "Skill not found"}), 404
 
