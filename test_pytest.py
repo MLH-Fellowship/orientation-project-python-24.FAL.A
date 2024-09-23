@@ -71,6 +71,39 @@ def test_education(client):
     assert get_response.json[item_id]['course'] == example_education['course']
     assert get_response.json[item_id]['school'] == example_education['school']
 
+def test_delete_education(client):
+    """
+    Test the education deletion endpoint
+    """
+    # Ensure there's at least one education entry to delete
+    get_response = client.get('/resume/education')
+    assert get_response.status_code == 200
+    initial_education_count = len(get_response.json)
+
+    # Delete the first education entry
+    response = client.delete('/resume/education/0')
+    assert response.status_code == 200
+    assert response.json["message"] == "Education entry successfully deleted"
+
+    # Verify that the education entry count has decreased by one
+    get_response_after_delete = client.get('/resume/education')
+    assert get_response_after_delete.status_code == 200
+    assert len(get_response_after_delete.json) == initial_education_count - 1
+
+    # Attempt to delete twice the same education entry
+    response = client.delete('/resume/education/0')
+    assert response.status_code == 404
+    assert response.json["error"] == "Education entry not found"
+
+    # Calculate an invalid index that is out of bounds
+    invalid_index = initial_education_count
+    
+    # Attempt to delete an education entry with the invalid index
+    response = client.delete(f'/resume/education/{invalid_index}')
+    assert response.status_code == 404
+    assert response.json["error"] == "Education entry not found"
+
+
 def test_skill(client):
     """Add a new skill and check if it's returned in the list."""
     example_skill = {
