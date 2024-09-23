@@ -3,8 +3,3 @@
 .pytest_cache/
 __pycache__
 .vscode
-
-vop
-
-# Pycharm specific ignores
-.idea
