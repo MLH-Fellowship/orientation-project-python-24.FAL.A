@@ -330,6 +330,18 @@ def education_by_index(index=None):
         return jsonify({"message": "Experience updated", "id": index}), 204
     return jsonify({}), 400
 
+@app.route("/resume/education/<int:index>", methods=["DELETE"])
+def delete_education(index):
+    """
+    Delete an education entry by its index
+    
+    :param index: The index of the education to delete
+    """
+    if 0 <= index < len(data["education"]):
+        removed_education = data["education"].pop(index)
+        logging.info("Education deleted: %s at index %d", removed_education.course, index)
+        return jsonify({"message": "Education entry successfully deleted"}), 200
+    return jsonify({"error": "Education entry not found"}), 404
 
 # pylint: disable=inconsistent-return-statements
 @app.route("/resume/skill", methods=["GET", "POST"])
