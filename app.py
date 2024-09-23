@@ -336,59 +336,6 @@ def education_by_index(index=None):
     return jsonify({}), 400
 
 
-@app.route("/resume/education", methods=["GET", "POST"])
-def education():
-    """
-    Handles education requests for GET and POST methods
-    """
-    if request.method == 'GET':
-        return jsonify([edu.__dict__ for edu in data['education']]), 200
-
-    if request.method == 'POST':
-        request_body = request.get_json()
-        if not request_body:
-            return jsonify({"error": "Request must be JSON"}), 400
-
-        required_fields = {
-            "course": str,
-            "school": str,
-            "start_date": str,
-            "end_date": str,
-            "grade": str
-        }
-        missing_fields, invalid_fields = handle_missing_invalid_fields(
-            request_body, required_fields
-        )
-
-        if missing_fields or invalid_fields:
-            return (
-                jsonify({
-                    "error": "Validation failed",
-                    "missing_fields": missing_fields,
-                    "invalid_fields": invalid_fields
-                }),
-                400,
-            )
-
-        # Create new education entry
-        new_education = Education(
-            request_body["course"],
-            request_body["school"],
-            request_body["start_date"],
-            request_body["end_date"],
-            request_body["grade"],
-            DEFAULT_LOGO,
-        )
-        data['education'].append(new_education)
-        logging.info("New education added: %s", new_education.course)
-        return jsonify({"message": "New education created", "id": len(data['education']) - 1}), 201
-
-@app.route("/resume/education/<int:edu_index>", methods=["GET"])
-def education_by_index(edu_index):
-    if 0 <= edu_index < len(data["education"]):
-        return jsonify(data["education"][edu_index].__dict__), 200
-    return jsonify({"error": "Education not found"}), 404
-
 @app.route("/resume/skill", methods=["GET", "POST"])
 def skill():
     """

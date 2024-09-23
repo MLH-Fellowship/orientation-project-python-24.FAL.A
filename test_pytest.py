@@ -161,7 +161,7 @@ def test_upgrade_experience():
     '''
     # Test some invalid experience indices (only index 0 is valid initially).
     for index in range(2, 5):
-        response = app.test_client().put(f'/resume/experience/{index}')
+        response = app.test_client().put(f'/resume/experience/{index}', json={})
         assert response.status_code == 400
 
     # Update the only experience.
