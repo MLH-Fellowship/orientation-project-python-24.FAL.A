@@ -56,46 +56,45 @@ def test_education():
     response = app.test_client().get('/resume/education')
     assert response.json[item_id] == example_education
 
-def test_delete_education(client):
+def test_delete_education():
     """
     Test the education deletion endpoint
     """
     # Ensure there's at least one education entry to delete
-    get_response = client.get('/resume/education')
+    get_response = app.test_client().get('/resume/education')
     assert get_response.status_code == 200
     initial_education_count = len(get_response.json)
 
-    # Delete the first education entry
-    response = client.delete('/resume/education/0')
+    # Delete the last education entry
+    last_index = initial_education_count - 1
+    response = app.test_client().delete(f'/resume/education/{last_index}')
     assert response.status_code == 200
     assert response.json["message"] == "Education entry successfully deleted"
 
     # Verify that the education entry count has decreased by one
-    get_response_after_delete = client.get('/resume/education')
+    get_response_after_delete = app.test_client().get('/resume/education')
     assert get_response_after_delete.status_code == 200
     assert len(get_response_after_delete.json) == initial_education_count - 1
 
     # Attempt to delete twice the same education entry
-    response = client.delete('/resume/education/0')
+    response = app.test_client().delete(f'/resume/education/{last_index}')
     assert response.status_code == 404
     assert response.json["error"] == "Education entry not found"
 
-    # Calculate an invalid index that is out of bounds
-    invalid_index = initial_education_count
-    
-    # Attempt to delete an education entry with the invalid index
-    response = client.delete(f'/resume/education/{invalid_index}')
+    # Attempt to delete an education entry with the out of range index
+    invalid_index = initial_education_count + 1
+    response = app.test_client().delete(f'/resume/education/{invalid_index}')
     assert response.status_code == 404
     assert response.json["error"] == "Education entry not found"
-    
-    
+
+
 def test_skill():
     '''
     Add a new skill and then get all skills. 
 
     Check that it returns the new skill in that list
     '''
-    
+
     example_skill = {
         "name": "JavaScript",
         "proficiency": "2-4 years",
