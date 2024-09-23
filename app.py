@@ -418,72 +418,117 @@ def delete_education(index):
     return jsonify({"error": "Education entry not found"}), 404
 
 
-# pylint: disable=inconsistent-return-statements
-@app.route("/resume/skill", methods=["GET", "POST"])
+@app.route("/resume/skill", methods=["GET", "POST", "PUT"])
 def skill():
     """
-    Handle skill requests
+    Handle skill requests for GET, POST, and PUT methods.
     """
     if request.method == "GET":
-        skill_id = request.args.get("id")
-        if skill_id is None:
-            return jsonify(data["skill"]), 200
-        try:
-            skill_id = int(skill_id)
-        except ValueError:
-            return jsonify({"error": "Invalid request"}), 400
-        if 0 <= skill_id < len(data["skill"]):
-            return jsonify(data["skill"][skill_id]), 200
+        return handle_get_skill()
 
     if request.method == "POST":
-        request_body = (
-            request.form
-            if request.content_type == "multipart/form-data"
-            else request.get_json()
-        )
-        if not request_body:
-            return (
-                jsonify({"error": "Request must be JSON or include form data"}),
-                400,
-            )
+        return handle_post_skill()
 
-        required_fields = {"name": str, "proficiency": str}
-        missing_fields, invalid_fields = handle_missing_invalid_fields(
-            request_body, required_fields
-        )
+    if request.method == "PUT":
+        return handle_put_skill()
 
-        if missing_fields or invalid_fields:
-            return (
-                jsonify(
-                    {
-                        "error": "Validation failed",
-                        "missing_fields": missing_fields,
-                        "invalid_fields": invalid_fields,
-                    }
-                ),
-                400,
-            )
+    return jsonify({}), 400
 
-        # Handle logo file
-        logo_filename = DEFAULT_LOGO
-        if "logo" in request.files:
-            logo_file = request.files["logo"]
-            if logo_file and allowed_file(logo_file.filename):
-                filename = secure_filename(logo_file.filename)
-                logo_file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-                logo_filename = filename
 
-        # Create new skill
-        new_skill = Skill(
-            request_body["name"], request_body["proficiency"], logo_filename
-        )
-        data["skill"].append(new_skill)
-        logging.info("New skill added: %s", new_skill.name)
+def handle_get_skill():
+    """
+    Handle GET requests for skills.
+    """
+    skill_id = request.args.get("id")
+    if skill_id is None:
+        return jsonify(data["skill"]), 200
 
+    try:
+        skill_id = int(skill_id)
+        if 0 <= skill_id < len(data["skill"]):
+            return jsonify(data["skill"][skill_id]), 200
+        return jsonify({"error": "Skill not found"}), 404
+    except ValueError:
+        return jsonify({"error": "Invalid request"}), 400
+
+
+def handle_post_skill():
+    """
+    Handle POST requests for creating a new skill.
+    """
+    request_body = (
+        request.form
+        if request.content_type == "multipart/form-data"
+        else request.get_json()
+    )
+
+    if not request_body:
+        return jsonify({"error": "Request must be JSON or include form data"}), 400
+
+    required_fields = {"name": str, "proficiency": str}
+    missing_fields, invalid_fields = handle_missing_invalid_fields(
+        request_body, required_fields
+    )
+
+    if missing_fields or invalid_fields:
         return (
-            jsonify({"message": "New skill created", "id": len(data["skill"]) - 1}),
-            201,
+            jsonify(
+                {
+                    "error": "Validation failed",
+                    "missing_fields": missing_fields,
+                    "invalid_fields": invalid_fields,
+                }
+            ),
+            400,
         )
+
+    logo_filename = save_logo_file(request.files.get("logo"))
+
+    new_skill = Skill(request_body["name"], request_body["proficiency"], logo_filename)
+    data["skill"].append(new_skill)
+    return jsonify({"message": "New skill created", "id": len(data["skill"]) - 1}), 201
+
+
+def handle_put_skill():
+    """
+    Handle PUT requests for updating an existing skill.
+    """
+    request_body = request.get_json()
+    skill_id = request.args.get("id")
+
+    if not skill_id or not skill_id.isdigit():
+        return jsonify({"error": "Invalid skill ID"}), 400
+
+    skill_id = int(skill_id)
+    if 0 <= skill_id < len(data["skill"]):
+        if not request_body:
+            return jsonify({"error": "Request must be JSON"}), 400
+
+        data["skill"][skill_id]["name"] = request_body.get(
+            "name", data["skill"][skill_id]["name"]
+        )
+        data["skill"][skill_id]["proficiency"] = request_body.get(
+            "proficiency", data["skill"][skill_id]["proficiency"]
+        )
+        data["skill"][skill_id]["logo"] = request_body.get(
+            "logo", data["skill"][skill_id]["logo"]
+        )
+
+        return jsonify(data["skill"][skill_id]), 200
+
+    return jsonify({"error": "Skill not found"}), 404
+
+
+def save_logo_file(logo_file):
+    """
+    Save the logo file if provided and return the filename.
+    """
+    if logo_file and allowed_file(logo_file.filename):
+        filename = secure_filename(logo_file.filename)
+        logo_file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+        return filename
+
+    return DEFAULT_LOGO
 
 
 # pylint: disable=inconsistent-return-statements
