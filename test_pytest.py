@@ -49,11 +49,43 @@ def test_education():
         "grade": "86%",
         "logo": "default.jpg"
     }
+
     item_id = app.test_client().post('/resume/education',
                                      json=example_education).json['id']
 
     response = app.test_client().get('/resume/education')
     assert response.json[item_id] == example_education
+
+def test_delete_education():
+    """
+    Test the education deletion endpoint
+    """
+    # Ensure there's at least one education entry to delete
+    get_response = app.test_client().get('/resume/education')
+    assert get_response.status_code == 200
+    initial_education_count = len(get_response.json)
+
+    # Delete the last education entry
+    last_index = initial_education_count - 1
+    response = app.test_client().delete(f'/resume/education/{last_index}')
+    assert response.status_code == 200
+    assert response.json["message"] == "Education entry successfully deleted"
+
+    # Verify that the education entry count has decreased by one
+    get_response_after_delete = app.test_client().get('/resume/education')
+    assert get_response_after_delete.status_code == 200
+    assert len(get_response_after_delete.json) == initial_education_count - 1
+
+    # Attempt to delete twice the same education entry
+    response = app.test_client().delete(f'/resume/education/{last_index}')
+    assert response.status_code == 404
+    assert response.json["error"] == "Education entry not found"
+
+    # Attempt to delete an education entry with the out of range index
+    invalid_index = initial_education_count + 1
+    response = app.test_client().delete(f'/resume/education/{invalid_index}')
+    assert response.status_code == 404
+    assert response.json["error"] == "Education entry not found"
 
 
 def test_skill():
@@ -62,6 +94,7 @@ def test_skill():
 
     Check that it returns the new skill in that list
     '''
+
     example_skill = {
         "name": "JavaScript",
         "proficiency": "2-4 years",
