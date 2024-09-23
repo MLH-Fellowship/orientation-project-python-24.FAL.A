@@ -368,7 +368,7 @@ def skill():
     if request.method == 'GET':
         skill_id = request.args.get('id')
         if skill_id is None:
-            return jsonify([sk.__dict__ for sk in data["skill"]]), 200
+            return jsonify(data['skill']), 200
         try:
             skill_id = int(skill_id)
         except ValueError:
