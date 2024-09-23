@@ -1,16 +1,30 @@
+'''
+Tests in Pytest
+'''
 import pytest
-from app import app
+from app import app, reset_data
 from helpers import validate_fields, validate_phone_number
 
+
+# pylint: disable=redefined-outer-name
 @pytest.fixture
 def client():
     """Fixture for creating a test client."""
     with app.test_client() as client:
         yield client
 
+@pytest.fixture(autouse=True)
+def before_each_test():
+    """
+    Resets data before each test to ensure every test is independent of one another.
+    Runs before every test.
+    """
+    reset_data()
+
 def test_index(client):
     """Test the index route."""
     response = client.get('/')
+
     assert response.status_code == 200
     assert response.data == b"Welcome to MLH 24.FAL.A.2 Orientation API Project!!"
 
@@ -19,6 +33,7 @@ def test_client(client):
     response = client.get('/test')
     assert response.status_code == 200
     assert response.json['message'] == "Hello, World!"
+
 
 def test_experience(client):
     """Add a new experience and check if it's returned in the list."""
@@ -122,24 +137,23 @@ def test_invalid_phone_number():
     assert validate_phone_number(invalid_phone) is False
 
 
+# pylint: disable=redefined-outer-name
 def test_delete_skill(client):
     '''
     Test the skill deletion endpoint for skill ID bounds checking.
     '''
-    for index in range(2, 5):
-        response = client.delete(f'/resume/skill/{index}')
-        assert response.status_code == 404
-        assert response.json["error"] == "Skill not found"
-    # Delete the only skills.
-    for _ in range(2):
-        response = client.delete('/resume/skill/0')
-        assert response.status_code == 200
-        assert response.json["message"] == "Skill successfully deleted"
+    # Attempt to delete a valid skill in between some invalid attempts.
+    for skill_indices, expected_status_code in [
+        (range(1, 5), 404), (range(0, 1), 200), (range(0, 5), 404)
+    ]:
+        for index in skill_indices:
+            response = client.delete(f'/resume/skill/{index}')
+            assert response.status_code == expected_status_code
 
-    for index in range(0, 4):
-        response = client.delete(f'/resume/skill/{index}')
-        assert response.status_code == 404
-        assert response.json["error"] == "Skill not found"
+            if expected_status_code == 200:
+                assert response.json["message"] == "Skill successfully deleted"
+            else:
+                assert response.json["error"] == "Skill not found"
 
 
 def test_upgrade_experience():
@@ -150,7 +164,7 @@ def test_upgrade_experience():
     '''
     # Test some invalid experience indices (only index 0 is valid initially).
     for index in range(2, 5):
-        response = app.test_client().put(f'/resume/experience/{index}')
+        response = app.test_client().put(f'/resume/experience/{index}', json={})
         assert response.status_code == 400
 
     # Update the only experience.
