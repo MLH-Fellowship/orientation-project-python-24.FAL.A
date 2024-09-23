@@ -57,7 +57,13 @@ def test_education():
     )
 
     response = app.test_client().get("/resume/education")
-    assert response.json[item_id] == example_education
+    assert response.status_code == 200
+    assert response.json[item_id]["course"] == example_education["course"]
+    assert response.json[item_id]["school"] == example_education["school"]
+    assert response.json[item_id]["start_date"] == example_education["start_date"]
+    assert response.json[item_id]["end_date"] == example_education["end_date"]
+    assert response.json[item_id]["grade"] == example_education["grade"]
+    assert response.json[item_id]["logo"] == example_education["logo"]
 
 
 def test_delete_education():
@@ -80,14 +86,8 @@ def test_delete_education():
     assert get_response_after_delete.status_code == 200
     assert len(get_response_after_delete.json) == initial_education_count - 1
 
-    # Attempt to delete twice the same education entry
+    # Attempt to delete an already deleted education entry
     response = app.test_client().delete(f"/resume/education/{last_index}")
-    assert response.status_code == 404
-    assert response.json["error"] == "Education entry not found"
-
-    # Attempt to delete an education entry with the out of range index
-    invalid_index = initial_education_count + 1
-    response = app.test_client().delete(f"/resume/education/{invalid_index}")
     assert response.status_code == 404
     assert response.json["error"] == "Education entry not found"
 

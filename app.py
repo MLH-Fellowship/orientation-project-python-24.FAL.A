@@ -240,13 +240,13 @@ def experience_by_index(index):
 
 @app.route("/resume/education", methods=["GET", "POST"])
 @app.route("/resume/education/<int:index>", methods=["GET"])
-def education(index=None):
+def education():
     """
     Handles education requests. Supports both GET and POST methods:
 
     - GET:
-        - Returns a specific experience entry if a valid `index` is provided.
-        - If the `index` is invalid, returns a 404 error.
+        - Returns a list of all education records.
+        - If no index is provided, returns all records.
 
     - POST:
         - Adds a new education record to the database.
@@ -254,36 +254,42 @@ def education(index=None):
           and ensures they are present and of the correct type.
         - If any fields are missing or invalid, returns a 400 error.
         - Optionally accepts a `logo` file, which will be saved if it is a valid file.
-        - Returns a success message and the ID of the updated record.
-
-    :param index: (int, optional) The index of the education record to retrieve. If not provided,
-    all records are returned. Defaults to None.
-
-    :returns: JSON response containing the education data or error message, along with the HTTP
-    status code.
-
-    :rtype: tuple
+        - Returns a success message and the ID of the created record.
     """
     if request.method == "GET":
-        if 0 <= len(data["experience"]) and index < len(data["experience"]):
-            return jsonify(data["experience"][index])
-        return jsonify({"error": "Experience not found"}), 404
-    if request.method == "PUT":
-        if request.content_type == "multipart/form-data":
-            request_body = request.form
-        else:
-            request_body = request.get_json()
+        return jsonify([edu.__dict__ for edu in data["education"]]), 200
+
+    if request.method == "POST":
+        request_body = (
+            request.form
+            if request.content_type == "multipart/form-data"
+            else request.get_json()
+        )
 
         if not request_body:
             return jsonify({"error": "Request must be JSON or include form data"}), 400
 
-        error = validate_fields(
-            ["title", "company", "start_date", "end_date", "description"], request_body
+        required_fields = {
+            "course": str,
+            "school": str,
+            "start_date": str,
+            "end_date": str,
+            "grade": str,
+        }
+
+        missing_fields, invalid_fields = handle_missing_invalid_fields(
+            request_body, required_fields
         )
 
-        if error:
+        if missing_fields or invalid_fields:
             return (
-                jsonify({"error": ", ".join(error) + " parameter(s) is required"}),
+                jsonify(
+                    {
+                        "error": "Validation failed",
+                        "missing_fields": missing_fields,
+                        "invalid_fields": invalid_fields,
+                    }
+                ),
                 400,
             )
 
@@ -295,67 +301,88 @@ def education(index=None):
                 logo_file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
                 logo_filename = filename
 
-        data["experience"][index] = Experience(
-            request_body["title"],
-            request_body["company"],
+        new_education = Education(
+            request_body["course"],
+            request_body["school"],
             request_body["start_date"],
             request_body["end_date"],
-            request_body["description"],
+            request_body["grade"],
             logo_filename,
         )
 
-        return jsonify({"message": "Experience updated", "id": index}), 204
+        data["education"].append(new_education)
+        new_education_id = len(data["education"]) - 1
+
+        return (
+            jsonify({"message": "New education created", "id": new_education_id}),
+            201,
+        )
+
     return jsonify({}), 400
 
 
-@app.route("/resume/education/<int:index>", methods=["GET"])
-def education_by_index(index=None):
+@app.route("/resume/education/<int:index>", methods=["GET", "PUT"])
+def education_by_index(index):
     """
-    Handles education requests. Supports both GET and POST methods:
+    Handles education requests by index.
+
     - GET:
-        - Returns a specific experience entry if a valid `index` is provided.
+        - Returns a specific education entry if a valid `index` is provided.
         - If the `index` is invalid, returns a 404 error.
 
     - PUT:
-        - Updates an existing experience entry.
-        - Validates the required fields
-          (`title`, `company`, `start_date`, `end_date`, `description`)
+        - Updates an existing education entry by index.
+        - Validates the required fields (`course`, `school`, `start_date`, `end_date`, `grade`)
           and ensures they are present and of the correct type.
         - If any fields are missing or invalid, returns a 400 error.
         - Optionally accepts a `logo` file, which will be saved if it is a valid file.
         - Returns a success message and the ID of the updated record.
 
-    :param index: (int) The index of the experience record to retrieve.
+    :param index: (int) The index of the education record to retrieve or update.
 
-    :returns: JSON response containing the experience data or error message, along with the HTTP
+    :returns: JSON response containing the education data or error message, along with the HTTP
     status code.
-
-    :rtype: tuple
     """
     if request.method == "GET":
-        if 0 <= len(data["experience"]) and index < len(data["experience"]):
-            return jsonify(data["experience"][index])
-        return jsonify({"error": "Experience not found"}), 404
+        if 0 <= index < len(data["education"]):
+            return jsonify(data["education"][index].__dict__), 200
+        return jsonify({"error": "Education entry not found"}), 404
+
     if request.method == "PUT":
-        if request.content_type == "multipart/form-data":
-            request_body = request.form
-        else:
-            request_body = request.get_json()
+        request_body = (
+            request.form
+            if request.content_type == "multipart/form-data"
+            else request.get_json()
+        )
 
         if not request_body:
             return jsonify({"error": "Request must be JSON or include form data"}), 400
 
-        error = validate_fields(
-            ["title", "company", "start_date", "end_date", "description"], request_body
+        required_fields = {
+            "course": str,
+            "school": str,
+            "start_date": str,
+            "end_date": str,
+            "grade": str,
+        }
+
+        missing_fields, invalid_fields = handle_missing_invalid_fields(
+            request_body, required_fields
         )
 
-        if error:
+        if missing_fields or invalid_fields:
             return (
-                jsonify({"error": ", ".join(error) + " parameter(s) is required"}),
+                jsonify(
+                    {
+                        "error": "Validation failed",
+                        "missing_fields": missing_fields,
+                        "invalid_fields": invalid_fields,
+                    }
+                ),
                 400,
             )
 
-        logo_filename = DEFAULT_LOGO
+        logo_filename = data["education"][index].logo
         if "logo" in request.files:
             logo_file = request.files["logo"]
             if logo_file and allowed_file(logo_file.filename):
@@ -363,16 +390,15 @@ def education_by_index(index=None):
                 logo_file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
                 logo_filename = filename
 
-        data["experience"][index] = Experience(
-            request_body["title"],
-            request_body["company"],
-            request_body["start_date"],
-            request_body["end_date"],
-            request_body["description"],
-            logo_filename,
-        )
+        data["education"][index].course = request_body["course"]
+        data["education"][index].school = request_body["school"]
+        data["education"][index].start_date = request_body["start_date"]
+        data["education"][index].end_date = request_body["end_date"]
+        data["education"][index].grade = request_body["grade"]
+        data["education"][index].logo = logo_filename
 
-        return jsonify({"message": "Experience updated", "id": index}), 204
+        return jsonify({"message": "Education updated", "id": index}), 200
+
     return jsonify({}), 400
 
 
