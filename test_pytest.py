@@ -5,6 +5,8 @@ import pytest
 from app import app, reset_data
 from helpers import validate_fields, validate_phone_number
 
+
+# pylint: disable=redefined-outer-name
 @pytest.fixture
 def client():
     """Fixture for creating a test client."""
@@ -135,6 +137,7 @@ def test_invalid_phone_number():
     assert validate_phone_number(invalid_phone) is False
 
 
+# pylint: disable=redefined-outer-name
 def test_delete_skill(client):
     '''
     Test the skill deletion endpoint for skill ID bounds checking.

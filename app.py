@@ -64,7 +64,8 @@ def reset_data():
 
 
 reset_data()
-      
+
+
 def allowed_file(filename):
     """
     Check if the uploaded file has an allowed extension.
@@ -97,18 +98,8 @@ def handle_missing_invalid_fields(request_body, required_fields):
     return missing_fields, invalid_fields
 
 
-def allowed_file(filename):
-    """
-    Check if the uploaded file has an allowed extension.
-
-    :param filename: The name of the file to check
-    :return: True if the file extension is allowed, False otherwise
-    """
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
 @app.route("/", strict_slashes=False)
-def index():
+def home():
     """
     Returns a welcome message for the app
     """
@@ -147,11 +138,15 @@ def experience():
             "end_date": str,
             "description": str,
         }
-        missing_fields, invalid_fields = handle_missing_invalid_fields(request_body, required_fields)
+        missing_fields, invalid_fields = handle_missing_invalid_fields(
+            request_body, required_fields
+        )
 
         if missing_fields or invalid_fields:
-            logging.warning("Validation failed: Missing %s, Invalid %s", missing_fields, invalid_fields)
-            return jsonify({"error": "Validation failed", "missing_fields": missing_fields, "invalid_fields": invalid_fields}), 400
+            logging.warning("Validation failed: Missing %s, Invalid %s",
+                            missing_fields, invalid_fields)
+            return jsonify({"error": "Validation failed", "missing_fields": missing_fields,
+                            "invalid_fields": invalid_fields}), 400
 
         # Handle logo file
         logo_filename = DEFAULT_LOGO
@@ -336,6 +331,7 @@ def education_by_index(index=None):
     return jsonify({}), 400
 
 
+# pylint: disable=inconsistent-return-statements
 @app.route("/resume/skill", methods=["GET", "POST"])
 def skill():
     """
@@ -405,6 +401,7 @@ def skill():
         )
 
 
+# pylint: disable=inconsistent-return-statements
 @app.route("/resume/user_information", methods=["GET", "POST", "PUT"])
 def user_information():
     """
