@@ -152,6 +152,31 @@ def experience():
     return jsonify({})
 
 
+@app.route("/resume/experience/reorder", methods=["PUT"])
+def reorder_experience():
+    """
+    Reorder the experience entries based on the provided list of indices.
+    """
+    request_data = request.get_json()
+    if not request_data:
+        return jsonify({"error": "Request must be JSON"}), 400
+
+    if "order" not in request_data:
+        return jsonify({"error": "Missing 'order' parameter"}), 400
+
+    order = request_data["order"]
+    if not isinstance(order, list):
+        return jsonify({"error": "'order' parameter must be a list"}), 400
+
+    print(order, len(data["experience"]))
+    if len(order) != len(data["experience"]):
+        return jsonify({"error": "Invalid 'order' parameter"}), 400
+
+    data["experience"] = [data["experience"][i] for i in order]
+
+    return jsonify({"message": "Experience reordered"}), 204
+
+
 @app.route("/resume/experience/<int:index>", methods=["GET", "PUT"])
 def experience_by_index(index):
     """
@@ -262,6 +287,31 @@ def education():
         logging.info("New education added: %s", new_education.course)
         return jsonify({"message": "New education created", "id": len(data['education']) - 1}), 201
 
+
+@app.route("/resume/education/reorder", methods=["PUT"])
+def reorder_education():
+    """
+    Reorder the education entries based on the provided list of indices.
+    """
+    request_data = request.get_json()
+    if not request_data:
+        return jsonify({"error": "Request must be JSON"}), 400
+
+    if "order" not in request_data:
+        return jsonify({"error": "Missing 'order' parameter"}), 400
+
+    order = request_data["order"]
+    if not isinstance(order, list):
+        return jsonify({"error": "'order' parameter must be a list"}), 400
+
+    if len(order) != len(data["education"]):
+        return jsonify({"error": "Invalid 'order' parameter"}), 400
+
+    data["education"] = [data["education"][i] for i in order]
+
+    return jsonify({"message": "Education reordered"}), 204
+
+
 @app.route("/resume/education/<int:edu_index>", methods=["GET"])
 def education_by_index(edu_index):
     if 0 <= edu_index < len(data["education"]):
@@ -335,6 +385,30 @@ def skill():
             }),
             201,
         )
+
+
+@app.route("/resume/skill/reorder", methods=["PUT"])
+def reorder_skill():
+    """
+    Reorder the skill entries based on the provided list of indices.
+    """
+    request_data = request.get_json()
+    if not request_data:
+        return jsonify({"error": "Request must be JSON"}), 400
+
+    if "order" not in request_data:
+        return jsonify({"error": "Missing 'order' parameter"}), 400
+
+    order = request_data["order"]
+    if not isinstance(order, list):
+        return jsonify({"error": "'order' parameter must be a list"}), 400
+
+    if len(order) != len(data["skill"]):
+        return jsonify({"error": "Invalid 'order' parameter"}), 400
+
+    data["skill"] = [data["skill"][i] for i in order]
+
+    return jsonify({"message": "Skill reordered"}), 204
 
 
 @app.route("/resume/user_information", methods=["GET", "POST", "PUT"])

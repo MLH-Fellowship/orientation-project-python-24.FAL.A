@@ -1,6 +1,7 @@
 import pytest
-from app import app
+from app import app, data
 from helpers import validate_fields, validate_phone_number
+import random
 
 @pytest.fixture
 def client():
@@ -163,4 +164,52 @@ def test_upgrade_experience():
         "logo": "default.jpg"
     }
     response = app.test_client().put('/resume/experience/0', json=new_example_experience)
+    assert response.status_code == 204
+
+def test_reorder_experience():
+    '''
+    Test the reorder experience endpoint for experience ID bounds checking.
+    Reorders the only experience and check if the reorder was successful.
+    '''
+    # Test some invalid experience indices
+    response = app.test_client().put(f'/resume/experience/reorder', json={"order": [0, 1, 2]})
+    assert response.status_code == 400
+
+    # shuffle the experience order of data['experience']
+    new_order = random.sample(range(len(data['experience'])), len(data['experience']))
+
+    # Reorder the only experience.
+    response = app.test_client().put('/resume/experience/reorder', json={"order": new_order})
+    assert response.status_code == 204
+
+def test_reorder_education():
+    '''
+    Test the reorder education endpoint for education ID bounds checking.
+    Reorders the only education and check if the reorder was successful.
+    '''
+    # Test some invalid education indices
+    response = app.test_client().put(f'/resume/education/reorder', json={"order": [0, 1, 2]})
+    assert response.status_code == 400
+
+    # shuffle the education order of data['education']
+    new_order = random.sample(range(len(data['education'])), len(data['education']))
+
+    # Reorder the only education.
+    response = app.test_client().put('/resume/education/reorder', json={"order": new_order})
+    assert response.status_code == 204
+
+def test_reorder_skill():
+    '''
+    Test the reorder skill endpoint for skill ID bounds checking.
+    Reorders the only skill and check if the reorder was successful.
+    '''
+    # Test some invalid skill indices
+    response = app.test_client().put(f'/resume/skill/reorder', json={"order": [0, 1, 2]})
+    assert response.status_code == 400
+
+    # shuffle the skill order of data['skill']
+    new_order = random.sample(range(len(data['skill'])), len(data['skill']))
+
+    # Reorder the only skill.
+    response = app.test_client().put('/resume/skill/reorder', json={"order": new_order})
     assert response.status_code == 204
