@@ -7,7 +7,8 @@ import logging
 from werkzeug.utils import secure_filename
 from flask import Flask, jsonify, request, send_from_directory
 from models import Experience, Education, Skill, UserInformation
-from helpers import validate_fields, validate_phone_number
+from helpers import validate_fields, validate_phone_number, load_data, save_data
+from flask_cors import CORS
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -17,9 +18,10 @@ DEFAULT_LOGO = "default.jpg"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 app = Flask(__name__)
+CORS(app)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-data = {}
+data = load_data('data/data.json')
 
 
 def reset_data():
@@ -55,7 +57,7 @@ def reset_data():
     ]
 
 
-reset_data()
+#reset_data()
 
 
 def allowed_file(filename):
@@ -111,11 +113,7 @@ def experience():
         return jsonify([exp.__dict__ for exp in data["experience"]]), 200
 
     if request.method == "POST":
-        request_body = (
-            request.form
-            if request.content_type == "multipart/form-data"
-            else request.get_json()
-        )
+        request_body = request.form
         if not request_body:
             return jsonify({"error": "Request must be JSON or include form data"}), 400
 
@@ -166,6 +164,7 @@ def experience():
             logo_filename,
         )
         data["experience"].append(new_experience)
+        save_data('data/data.json', data)
 
         new_experience_id = len(data["experience"]) - 1
 
@@ -277,6 +276,7 @@ def education():
 
         new_education = Education(**request.json)
         data["education"].append(new_education)
+        save_data('data/data.json', data)
         new_education_index = len(data["education"]) - 1
 
         return jsonify({"id": new_education_index}), 201
@@ -428,6 +428,7 @@ def skill():
             request_body["name"], request_body["proficiency"], logo_filename
         )
         data["skill"].append(new_skill)
+        save_data('data/data.json', data)
         logging.info("New skill added: %s", new_skill.name)
 
         return (
