@@ -7,7 +7,7 @@ import logging
 from werkzeug.utils import secure_filename
 from flask import Flask, jsonify, request, send_from_directory
 from models import Experience, Education, Skill, UserInformation
-from helpers import validate_fields, validate_phone_number, load_data, save_data
+from helpers import validate_fields, validate_phone_number, load_data, save_data, generate_id
 from flask_cors import CORS
 
 # Configure logging
@@ -113,7 +113,7 @@ def experience():
         return jsonify([exp.__dict__ for exp in data["experience"]]), 200
 
     if request.method == "POST":
-        request_body = request.form
+        request_body = request.json
         if not request_body:
             return jsonify({"error": "Request must be JSON or include form data"}), 400
 
@@ -155,6 +155,8 @@ def experience():
                 logo_filename = filename
 
         # Create new experience
+        new_id = generate_id(data, 'experience')
+
         new_experience = Experience(
             request_body["title"],
             request_body["company"],
@@ -162,12 +164,12 @@ def experience():
             request_body["end_date"],
             request_body["description"],
             logo_filename,
+            new_id,
+
         )
         data["experience"].append(new_experience)
         save_data('data/data.json', data)
-
-        new_experience_id = len(data["experience"]) - 1
-
+        new_experience_id = new_id
         logging.info("New experience added: %s", new_experience.title)
         return (
             jsonify({"message": "New experience created", "id": new_experience_id}),
@@ -273,8 +275,12 @@ def education():
                 ),
                 400,
             )
+        new_id = generate_id(data, 'education')
 
-        new_education = Education(**request.json)
+        new_education_data = request.json
+        new_education_data['id'] = new_id
+
+        new_education = Education(**new_education_data)
         data["education"].append(new_education)
         save_data('data/data.json', data)
         new_education_index = len(data["education"]) - 1
@@ -462,9 +468,15 @@ def user_information():
         if not is_valid_phone_number:
             return jsonify({"error": "Invalid phone number"}), 400
 
-        data["user_information"] = request_data
+        # Ensure that the user information is stored as a list
+        user_info = UserInformation(
+            request_data["name"],
+            request_data["email_address"],
+            request_data["phone_number"]
+        )
+        data["user_information"] = [user_info]  # Ensure it's always a list
         logging.info("User information updated for: %s", request_data["name"])
-        return jsonify(data["user_information"]), 201
+        return jsonify(data["user_information"][0]), 201
 
 
 @app.route("/resume/skill/<int:skill_index>", methods=["DELETE"])

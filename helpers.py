@@ -21,10 +21,10 @@ def load_data(filename):
         }
     except FileNotFoundError:
         print(f"File {filename} not found.")
-        return {"experience": [], "education": [], "skill": [], "user_information": UserInformation()}  
+        return {"experience": [], "education": [], "skill": [], "user_information": []}  
     except json.JSONDecodeError:
         print("Error decoding JSON.")
-        return {"experience": [], "education": [], "skill": [], "user_information": UserInformation()}
+        return {"experience": [], "education": [], "skill": [], "user_information": []}
 
 def save_data(filename, data):
     """
@@ -41,6 +41,14 @@ def save_data(filename, data):
             json.dump(json_data, file, indent=4)
     except IOError as e:
         print(f"An error occurred while writing to {filename}: {e}")
+
+def generate_id(data, model):
+    """
+    Generate a new ID for a model
+    """
+    if data[model]:
+        return max(item.id for item in data[model] if item.id is not None) + 1
+    return 1
 
 def validate_fields(field_names, request_data):
     '''
