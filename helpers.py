@@ -1,9 +1,9 @@
 '''
 Helper functions for the Flask application
 '''
+import json
 import phonenumbers
 from models import Experience, Education, Skill, UserInformation
-import json
 
 def load_data(filename):
     """

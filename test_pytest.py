@@ -1,10 +1,9 @@
 """
 Tests in Pytest
 """
-
+import json
 from app import app
 from helpers import validate_fields, validate_phone_number
-import json
 from helpers import load_data, save_data
 from models import Experience, Education, Skill, UserInformation
 
