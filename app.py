@@ -168,9 +168,13 @@ def reorder_experience():
     if not isinstance(order, list):
         return jsonify({"error": "'order' parameter must be a list"}), 400
 
-    print(order, len(data["experience"]))
     if len(order) != len(data["experience"]):
         return jsonify({"error": "Invalid 'order' parameter"}), 400
+        
+    for i in order:
+        if i < 0 or i >= len(data["experience"]):
+            return jsonify({"error": "Invalid 'order' parameter"}), 400
+
 
     data["experience"] = [data["experience"][i] for i in order]
 
@@ -306,6 +310,10 @@ def reorder_education():
 
     if len(order) != len(data["education"]):
         return jsonify({"error": "Invalid 'order' parameter"}), 400
+    
+    for i in order:
+        if i < 0 or i >= len(data["education"]):
+            return jsonify({"error": "Invalid 'order' parameter"}), 400
 
     data["education"] = [data["education"][i] for i in order]
 
@@ -405,6 +413,10 @@ def reorder_skill():
 
     if len(order) != len(data["skill"]):
         return jsonify({"error": "Invalid 'order' parameter"}), 400
+    
+    for i in order:
+        if i < 0 or i >= len(data["skill"]):
+            return jsonify({"error": "Invalid 'order' parameter"}), 400
 
     data["skill"] = [data["skill"][i] for i in order]
 
