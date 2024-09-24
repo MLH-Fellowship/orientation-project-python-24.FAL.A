@@ -1,14 +1,13 @@
 """
 Flask Application for Resume Management
 """
-
+from flask_cors import CORS
 import os
 import logging
 from werkzeug.utils import secure_filename
 from flask import Flask, jsonify, request, send_from_directory
 from models import Experience, Education, Skill, UserInformation
 from helpers import validate_fields, validate_phone_number, load_data, save_data, generate_id
-from flask_cors import CORS
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
