@@ -1,8 +1,8 @@
 """
 Flask Application for Resume Management
 """
-from flask_cors import CORS
 import os
+from flask_cors import CORS
 import logging
 from werkzeug.utils import secure_filename
 from flask import Flask, jsonify, request, send_from_directory
