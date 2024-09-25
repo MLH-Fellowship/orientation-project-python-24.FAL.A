@@ -1,7 +1,8 @@
 """
 Tests in Pytest
 """
-import json
+
+import json, io
 import pytest
 from app import app, data
 from helpers import validate_fields, validate_phone_number, load_data, save_data
@@ -72,6 +73,7 @@ def test_experience(client):
     response = client.get("/resume/experience")
     assert any(exp["id"] == item_id for exp in response.json)
 
+
 def test_delete_experience(client):
     """Test the experience deletion endpoint."""
     get_response = client.get("/resume/experience")
@@ -105,7 +107,7 @@ def test_education(client):
         "start_date": "October 2022",
         "end_date": "August 2024",
         "grade": "86%",
-        "logo": "default.jpg"
+        "logo": "default.jpg",
     }
     item_id = (
         app.test_client().post("/resume/education", json=example_education).json["id"]
@@ -142,6 +144,60 @@ def test_delete_education(client):
     assert response.json["error"] == "Education entry not found"
 
 
+def test_post_education_with_file_upload(client):
+    """Test the POST request for education with file upload."""
+    data = {
+        "course": "Computer Science",
+        "school": "University of Awesome",
+        "start_date": "2020",
+        "end_date": "2024",
+        "grade": "A",
+    }
+    logo_data = {
+        "logo": (io.BytesIO(b"fake image data"), "test-logo.jpg"),
+    }
+
+    response = client.post(
+        "/resume/education",
+        data={**data, **logo_data},
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 201
+    assert "id" in response.json
+
+
+def test_put_education_with_file_upload(client):
+    """Test the PUT request for updating education with file upload."""
+    example_education = {
+        "course": "Engineering",
+        "school": "NYU",
+        "start_date": "October 2022",
+        "end_date": "August 2024",
+        "grade": "86%",
+        "logo": "default.jpg",
+    }
+    item_id = client.post("/resume/education", json=example_education).json["id"]
+
+    update_data = {
+        "course": "Updated Engineering",
+        "school": "Updated NYU",
+        "start_date": "October 2023",
+        "end_date": "August 2025",
+        "grade": "90%",
+    }
+    logo_data = {
+        "logo": (io.BytesIO(b"fake image data"), "updated-logo.jpg"),
+    }
+
+    response = client.put(
+        f"/resume/education/{item_id}",
+        data={**update_data, **logo_data},
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 200
+    assert response.json["message"] == "Education entry updated"
+
+
 def test_skill(client):
     """Add a new skill and check if it's returned in the list."""
     example_skill = {
@@ -157,23 +213,23 @@ def test_skill(client):
 def test_delete_skill(client):
     """Test the skill deletion endpoint: remove all existing skills, add one, remove it, and attempt to remove it again."""
 
-    initial_skills = client.get('/resume/skill').json
+    initial_skills = client.get("/resume/skill").json
     for _ in range(len(initial_skills)):
-        response = client.delete(f'/resume/skill/{0}')  
+        response = client.delete(f"/resume/skill/{0}")
         assert response.status_code == 200
         assert response.json["message"] == "Skill successfully deleted"
 
-    # Add one skill 
+    # Add one skill
     new_skill = {"name": "Python", "proficiency": "Expert"}
-    response = client.post('/resume/skill', json=new_skill)
+    response = client.post("/resume/skill", json=new_skill)
     assert response.status_code == 201
     assert response.json["message"] == "New skill created"
 
-    response = client.delete('/resume/skill/0')
+    response = client.delete("/resume/skill/0")
     assert response.status_code == 200
     assert response.json["message"] == "Skill successfully deleted"
 
-    response = client.delete('/resume/skill/0')
+    response = client.delete("/resume/skill/0")
     assert response.status_code == 404
     assert response.json["error"] == "Skill not found"
 
@@ -272,44 +328,77 @@ def test_invalid_phone_number():
     invalid_phone = "123456"
     assert validate_phone_number(invalid_phone) is False
 
+
 def test_load_data(tmpdir):
     # Create a temporary file path
-    filename = tmpdir.join('data.json')
+    filename = tmpdir.join("data.json")
 
     sample_data = {
-        "experience": [{"title": "Developer", "company": "Company A", "start_date": "2021", "end_date": "2022", "description": "Development", "logo": "logo.png"}],
-        "education": [{"course": "CS", "school": "Tech University", "start_date": "2018", "end_date": "2022", "grade": "90", "logo": "logo.png"}],
+        "experience": [
+            {
+                "title": "Developer",
+                "company": "Company A",
+                "start_date": "2021",
+                "end_date": "2022",
+                "description": "Development",
+                "logo": "logo.png",
+            }
+        ],
+        "education": [
+            {
+                "course": "CS",
+                "school": "Tech University",
+                "start_date": "2018",
+                "end_date": "2022",
+                "grade": "90",
+                "logo": "logo.png",
+            }
+        ],
         "skill": [{"name": "Python", "proficiency": "Expert", "logo": "logo.png"}],
-        "user_information": [{"name": "John Doe", "email_address": "john@example.com", "phone_number": "+123456789"}]
+        "user_information": [
+            {
+                "name": "John Doe",
+                "email_address": "john@example.com",
+                "phone_number": "+123456789",
+            }
+        ],
     }
 
-    with open(filename, 'w') as file:
+    with open(filename, "w") as file:
         json.dump(sample_data, file)
 
     loaded_data = load_data(str(filename))
 
     # Assert that the data was loaded correctly
-    assert len(loaded_data['experience']) == 1
-    assert loaded_data['experience'][0].title == "Developer"
-    assert loaded_data['user_information'][0].name == "John Doe"
+    assert len(loaded_data["experience"]) == 1
+    assert loaded_data["experience"][0].title == "Developer"
+    assert loaded_data["user_information"][0].name == "John Doe"
 
 
 def test_save_data(tmpdir):
     # Create a temporary file path
-    filename = tmpdir.join('data.json')
+    filename = tmpdir.join("data.json")
 
     data = {
-        "experience": [Experience("Developer", "Company A", "2021", "2022", "Development", "logo.png")],
-        "education": [Education("CS", "Tech University", "2018", "2022", "90", "logo.png")],
+        "experience": [
+            Experience(
+                "Developer", "Company A", "2021", "2022", "Development", "logo.png"
+            )
+        ],
+        "education": [
+            Education("CS", "Tech University", "2018", "2022", "90", "logo.png")
+        ],
         "skill": [Skill("Python", "Expert", "logo.png")],
-        "user_information": [UserInformation("John Doe", "john@example.com", "+123456789")]
+        "user_information": [
+            UserInformation("John Doe", "john@example.com", "+123456789")
+        ],
     }
 
     save_data(str(filename), data)
 
-    with open(filename, 'r') as file:
+    with open(filename, "r") as file:
         saved_data = json.load(file)
 
     # Assert that the file contains the correct data
-    assert saved_data['experience'][0]['title'] == "Developer"
-    assert saved_data['user_information'][0]['name'] == "John Doe"
+    assert saved_data["experience"][0]["title"] == "Developer"
+    assert saved_data["user_information"][0]["name"] == "John Doe"
