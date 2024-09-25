@@ -156,8 +156,8 @@ def delete_experience(index):
     """
     if 0 <= index < len(data["experience"]):
         data["experience"].pop(index)
-        return jsonify({"message": "Experience successfully deleted"}), 200
-    return jsonify({"error": "Experience not found"}), 404
+        return jsonify({"message": "Experience entry successfully deleted"}), 200
+    return jsonify({"error": "Experience entry not found"}), 404
 
 
 @app.route("/resume/education", methods=["GET", "POST"])
