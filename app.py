@@ -1,6 +1,7 @@
 """
 Flask Application for Resume Management
 """
+
 import os
 import logging
 
@@ -10,7 +11,13 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from flask import Flask, jsonify, request, send_from_directory
 from models import Experience, Education, Skill, UserInformation
-from helpers import validate_fields, validate_phone_number, load_data, save_data, generate_id
+from helpers import (
+    validate_fields,
+    validate_phone_number,
+    load_data,
+    save_data,
+    generate_id,
+)
 
 
 spell = SpellChecker()
@@ -26,7 +33,8 @@ app = Flask(__name__)
 CORS(app)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-data = load_data('data/data.json')
+data = load_data("data/data.json")
+
 
 def reset_data():
     """
@@ -61,7 +69,7 @@ def reset_data():
     ]
 
 
-#reset_data()
+# reset_data()
 
 
 def allowed_file(filename):
@@ -157,7 +165,7 @@ def experience():
                 logo_filename = filename
 
         # Create new experience
-        new_id = generate_id(data, 'experience')
+        new_id = generate_id(data, "experience")
 
         # Create new experience
         new_experience = Experience(
@@ -170,9 +178,12 @@ def experience():
             new_id,
         )
         data["experience"].append(new_experience)
-        save_data('data/data.json', data)
+        save_data("data/data.json", data)
         new_experience_index = len(data["experience"]) - 1
-        return jsonify({"message": "New experience created", "id": new_experience_index}), 201
+        return (
+            jsonify({"message": "New experience created", "id": new_experience_index}),
+            201,
+        )
 
     return 400
 
@@ -191,15 +202,20 @@ def delete_experience(index):
 @app.route("/resume/education", methods=["GET", "POST"])
 def education():
     """
-    Handle education requests for GET and POST methods
+    Handle education requests for GET and POST methods.
+    POST: Add a new education entry with optional file upload.
     """
     if request.method == "GET":
         return jsonify([edu.__dict__ for edu in data["education"]]), 200
 
     if request.method == "POST":
-        request_body = request.get_json()
+        if request.content_type.startswith('multipart/form-data'):
+            request_body = request.form
+        else:
+            request_body = request.get_json()
+
         if not request_body:
-            return jsonify({"error": "Request must be JSON"}), 400
+            return jsonify({"error": "Request must be JSON or include form data"}), 400
 
         required_fields = {
             "course": str,
@@ -219,21 +235,28 @@ def education():
                 "invalid_fields": invalid_fields
             }), 400
 
+        logo_filename = DEFAULT_LOGO
+        if "logo" in request.files:
+            logo_file = request.files["logo"]
+            if logo_file and allowed_file(logo_file.filename):
+                filename = secure_filename(logo_file.filename)
+                logo_file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+                logo_filename = filename
+
         new_id = generate_id(data, 'education')
 
-        # Create new education entry
         new_education = Education(
             request_body["course"],
             request_body["school"],
             request_body["start_date"],
             request_body["end_date"],
             request_body["grade"],
-            DEFAULT_LOGO,
+            logo_filename,
             new_id
         )
         data["education"].append(new_education)
         save_data('data/data.json', data)
-        new_education_index = new_id - 1
+        new_education_index = len(data["education"]) - 1
         return jsonify({"message": "New education created", "id": new_education_index}), 201
 
     return 400
@@ -267,6 +290,42 @@ def delete_education(index):
     if 0 <= index < len(data["education"]):
         data["education"].pop(index)
         return jsonify({"message": "Education entry successfully deleted"}), 200
+    return jsonify({"error": "Education entry not found"}), 404
+
+
+@app.route("/resume/education/<int:index>", methods=["PUT"])
+def update_education(index):
+    """
+    Update education entry by index.
+    Supports updating both text fields and file upload for logo.
+    """
+    if 0 <= index < len(data["education"]):
+        if request.content_type.startswith('multipart/form-data'):
+            request_body = request.form
+        else:
+            request_body = request.get_json()
+
+        if not request_body:
+            return jsonify({"error": "Request must be JSON or include form data"}), 400
+
+        edu = data["education"][index]
+
+        edu.course = request_body.get("course", edu.course)
+        edu.school = request_body.get("school", edu.school)
+        edu.start_date = request_body.get("start_date", edu.start_date)
+        edu.end_date = request_body.get("end_date", edu.end_date)
+        edu.grade = request_body.get("grade", edu.grade)
+
+        if "logo" in request.files:
+            logo_file = request.files["logo"]
+            if logo_file and allowed_file(logo_file.filename):
+                filename = secure_filename(logo_file.filename)
+                logo_file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+                edu.logo = filename
+
+        save_data('data/data.json', data)
+        return jsonify({"message": "Education entry updated", "id": index}), 200
+
     return jsonify({"error": "Education entry not found"}), 404
 
 
@@ -319,8 +378,11 @@ def skill():
         )
         data["skill"].append(new_skill)
 
-        save_data('data/data.json', data)
-        return jsonify({"message": "New skill created", "id": len(data["skill"]) - 1}), 201
+        save_data("data/data.json", data)
+        return (
+            jsonify({"message": "New skill created", "id": len(data["skill"]) - 1}),
+            201,
+        )
 
     return 400
 
@@ -356,7 +418,7 @@ def delete_skill(index):
     if 0 <= index < len(data["skill"]):
         removed_skill = data["skill"].pop(index)
         logging.info("Skill deleted: %s", removed_skill.name)
-        save_data('data/data.json', data)
+        save_data("data/data.json", data)
         return jsonify({"message": "Skill successfully deleted"}), 200
     return jsonify({"error": "Skill not found"}), 404
 

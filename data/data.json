@@ -73,6 +73,33 @@
             "grade": "86%",
             "logo": "default.jpg",
             "id": 3
+        },
+        {
+            "course": "Engineering",
+            "school": "NYU",
+            "start_date": "October 2022",
+            "end_date": "August 2024",
+            "grade": "86%",
+            "logo": "default.jpg",
+            "id": 4
+        },
+        {
+            "course": "Computer Science",
+            "school": "University of Awesome",
+            "start_date": "2020",
+            "end_date": "2024",
+            "grade": "A",
+            "logo": "test-logo.jpg",
+            "id": 5
+        },
+        {
+            "course": "Updated Engineering",
+            "school": "Updated NYU",
+            "start_date": "October 2023",
+            "end_date": "August 2025",
+            "grade": "90%",
+            "logo": "updated-logo.jpg",
+            "id": 6
         }
     ],
     "skill": [],
