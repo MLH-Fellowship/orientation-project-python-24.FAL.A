@@ -149,6 +149,17 @@ def experience():
         return jsonify({"message": "New experience created", "id": len(data["experience"]) - 1}), 201
 
 
+@app.route("/resume/experience/<int:index>", methods=["DELETE"])
+def delete_experience(index):
+    """
+    Delete experience entry by index
+    """
+    if 0 <= index < len(data["experience"]):
+        data["experience"].pop(index)
+        return jsonify({"message": "Experience successfully deleted"}), 200
+    return jsonify({"error": "Experience not found"}), 404
+
+
 @app.route("/resume/education", methods=["GET", "POST"])
 def education():
     """
