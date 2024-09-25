@@ -1,0 +1,86 @@
+{
+    "experience": [
+        {
+            "title": "Software Developer",
+            "company": "A Cool Company",
+            "start_date": "October 2022",
+            "end_date": "Present",
+            "description": "Writing Python Code",
+            "logo": "example-logo.png",
+            "id": 1
+        },
+        {
+            "title": "Software Developer",
+            "company": "A Cool Company",
+            "start_date": "October 2022",
+            "end_date": "Present",
+            "description": "Writing Python Code",
+            "logo": "example-logo.png",
+            "id": 2
+        },
+        {
+            "title": "Software Developer",
+            "company": "A Cool Company",
+            "start_date": "October 2022",
+            "end_date": "Present",
+            "description": "Writing Python Code",
+            "logo": "example-logo.png",
+            "id": 3
+        },
+        {
+            "title": "Software Developer",
+            "company": "A Cooler Company",
+            "start_date": "October 2022",
+            "end_date": "Present",
+            "description": "Writing JavaScript Code",
+            "logo": "default.jpg",
+            "id": 4
+        },
+        {
+            "title": "Software Developer",
+            "company": "A Cooler Company",
+            "start_date": "October 2022",
+            "end_date": "Present",
+            "description": "Writing JavaScript Code",
+            "logo": "default.jpg",
+            "id": 5
+        }
+    ],
+    "education": [
+        {
+            "course": "Engineering",
+            "school": "NYU",
+            "start_date": "October 2022",
+            "end_date": "August 2024",
+            "grade": "86%",
+            "logo": "default.jpg",
+            "id": 1
+        },
+        {
+            "course": "Engineering",
+            "school": "NYU",
+            "start_date": "October 2022",
+            "end_date": "August 2024",
+            "grade": "86%",
+            "logo": "default.jpg",
+            "id": 2
+        },
+        {
+            "course": "Engineering",
+            "school": "NYU",
+            "start_date": "October 2022",
+            "end_date": "August 2024",
+            "grade": "86%",
+            "logo": "default.jpg",
+            "id": 3
+        }
+    ],
+    "skill": [],
+    "user_information": [
+        {
+            "name": "John Doe",
+            "email_address": "john@example.com",
+            "phone_number": "+237680162416"
+        }
+    ]
+}
