@@ -69,7 +69,7 @@ def test_experience(client):
         "description": "Writing JavaScript Code",
         "logo": "default.jpg",
     }
-    item_id = client.post("/resume/experience", json=example_experience).json["id"]
+    item_id = client.post("/resume/experience", data=example_experience).json["id"]
     response = client.get("/resume/experience")
     assert any(exp["id"] == item_id for exp in response.json)
 

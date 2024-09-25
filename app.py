@@ -124,13 +124,10 @@ def experience():
         return jsonify([exp.__dict__ for exp in data["experience"]]), 200
 
     if request.method == "POST":
-        request_body = (
-            request.form
-            if request.content_type == "multipart/form-data"
-            else request.get_json()
-        )
+        request_body = request.form
+
         if not request_body:
-            return jsonify({"error": "Request must be JSON or include form data"}), 400
+            return jsonify({"error": "Request must include form data"}), 400
 
         required_fields = {
             "title": str,
