@@ -14,6 +14,7 @@ def client():
     with app.test_client() as client:
         yield client
 
+
 @pytest.fixture(autouse=True)
 def reset_data():
     """Reset the data to its initial state before each test."""
@@ -46,15 +47,15 @@ def reset_data():
 
 def test_index(client):
     """Test the index route."""
-    response = client.get('/')
+    response = client.get("/")
     assert response.status_code == 200
 
 
 def test_client(client):
     """Makes a request and checks the message received is the same."""
-    response = client.get('/test')
+    response = client.get("/test")
     assert response.status_code == 200
-    assert response.json['message'] == "Hello, World!"
+    assert response.json["message"] == "Hello, World!"
 
 
 def test_experience(client):
@@ -127,17 +128,17 @@ def test_skill(client):
 def test_delete_skill(client):
     """Test the skill deletion endpoint for skill ID bounds checking."""
     for index in range(2, 5):
-        response = client.delete(f'/resume/skill/{index}')
+        response = client.delete(f"/resume/skill/{index}")
         assert response.status_code == 404
         assert response.json["error"] == "Skill not found"
-    
+
     for _ in range(2):
-        response = client.delete('/resume/skill/0')
+        response = client.delete("/resume/skill/0")
         assert response.status_code == 200
         assert response.json["message"] == "Skill successfully deleted"
 
     for index in range(0, 4):
-        response = client.delete(f'/resume/skill/{index}')
+        response = client.delete(f"/resume/skill/{index}")
         assert response.status_code == 404
         assert response.json["error"] == "Skill not found"
 
@@ -158,39 +159,39 @@ def test_post_user_information(client):
 
 def test_spellcheck(client):
     """Test the spell check endpoint."""
-    data["experience"].append(Experience(
-        "Software Develper",  # Intentional typo
-        "A Cool Company",
-        "October 2022",
-        "Present",
-        "Writting Python Code",  # Intentional typo
-        "example-logo.png"
-    ))
+    data["experience"].append(
+        Experience(
+            "Software Develper",  # Intentional typo
+            "A Cool Company",
+            "October 2022",
+            "Present",
+            "Writting Python Code",  # Intentional typo
+            "example-logo.png",
+        )
+    )
 
-    data["education"].append(Education(
-        "Comptuer Science",  
-        "University of Tech",
-        "September 2019",
-        "July 2022",
-        "80%",
-        "example-logo.png"
-    ))
+    data["education"].append(
+        Education(
+            "Comptuer Science",
+            "University of Tech",
+            "September 2019",
+            "July 2022",
+            "80%",
+            "example-logo.png",
+        )
+    )
 
-    data["skill"].append(Skill("Pythn", "1-2 Years", "example-logo.png"))  
+    data["skill"].append(Skill("Pythn", "1-2 Years", "example-logo.png"))
 
     request_body = {
         "experience": [
             {"title": "Software Develper", "description": "Writting Python Code"}
         ],
-        "education": [
-            {"course": "Comptuer Science"}
-        ],
-        "skill": [
-            {"name": "Pythn"}
-        ]
+        "education": [{"course": "Comptuer Science"}],
+        "skill": [{"name": "Pythn"}],
     }
 
-    response = client.post('/resume/spellcheck', json=request_body)
+    response = client.post("/resume/spellcheck", json=request_body)
     assert response.status_code == 200
     results = response.json
 
