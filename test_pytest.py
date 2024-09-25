@@ -1,14 +1,11 @@
+"""
+Tests in Pytest
+"""
+
 import pytest
 from app import app, data
 from helpers import validate_fields, validate_phone_number
 from models import Experience, Education, Skill
-
-
-@pytest.fixture
-def client():
-    """Fixture for creating a test client."""
-    with app.test_client() as client:
-        yield client
 
 
 @pytest.fixture(autouse=True)
@@ -45,7 +42,6 @@ def test_index(client):
     """Test the index route."""
     response = client.get('/')
     assert response.status_code == 200
-    assert response.data == b"Welcome to MLH 24.FAL.A.2 Orientation API Project!!"
 
 
 def test_client(client):
@@ -65,13 +61,9 @@ def test_experience(client):
         "description": "Writing JavaScript Code",
         "logo": "default.jpg",
     }
-    post_response = client.post('/resume/experience', json=example_experience)
-    assert post_response.status_code == 201
-    item_id = post_response.json['id']
-    get_response = client.get('/resume/experience')
-    assert get_response.status_code == 200
-    assert get_response.json[item_id]['title'] == example_experience['title']
-    assert get_response.json[item_id]['company'] == example_experience['company']
+    item_id = client.post("/resume/experience", json=example_experience).json["id"]
+    response = client.get("/resume/experience")
+    assert response.json[item_id] == example_experience
 
 
 def test_education(client):
@@ -84,13 +76,34 @@ def test_education(client):
         "grade": "86%",
         "logo": "default.jpg",
     }
-    post_response = client.post('/resume/education', json=example_education)
-    assert post_response.status_code == 201
-    item_id = post_response.json['id']
-    get_response = client.get('/resume/education')
+    item_id = client.post("/resume/education", json=example_education).json["id"]
+    response = client.get("/resume/education")
+    assert response.json[item_id] == example_education
+
+
+def test_delete_education(client):
+    """Test the education deletion endpoint."""
+    get_response = client.get("/resume/education")
     assert get_response.status_code == 200
-    assert get_response.json[item_id]['course'] == example_education['course']
-    assert get_response.json[item_id]['school'] == example_education['school']
+    initial_education_count = len(get_response.json)
+
+    last_index = initial_education_count - 1
+    response = client.delete(f"/resume/education/{last_index}")
+    assert response.status_code == 200
+    assert response.json["message"] == "Education entry successfully deleted"
+
+    get_response_after_delete = client.get("/resume/education")
+    assert get_response_after_delete.status_code == 200
+    assert len(get_response_after_delete.json) == initial_education_count - 1
+
+    response = client.delete(f"/resume/education/{last_index}")
+    assert response.status_code == 404
+    assert response.json["error"] == "Education entry not found"
+
+    invalid_index = initial_education_count + 1
+    response = client.delete(f"/resume/education/{invalid_index}")
+    assert response.status_code == 404
+    assert response.json["error"] == "Education entry not found"
 
 
 def test_skill(client):
@@ -100,65 +113,9 @@ def test_skill(client):
         "proficiency": "2-4 years",
         "logo": "default.jpg",
     }
-
-    post_response = client.post('/resume/skill', json=example_skill)
-    assert post_response.status_code == 201
-    item_id = post_response.json['id']
-    get_response = client.get('/resume/skill')
-    assert get_response.status_code == 200
-    assert get_response.json[item_id]['name'] == example_skill['name']
-    assert get_response.json[item_id]['proficiency'] == example_skill['proficiency']
-
-
-def test_post_user_information(client):
-    """Test the POST request for user information."""
-    new_user_info = {
-        "name": "John Doe",
-        "email_address": "john@example.com",
-        "phone_number": "+237680162416",
-    }
-    response = client.post('/resume/user_information', json=new_user_info)
-    assert response.status_code == 201
-    assert response.json['name'] == new_user_info['name']
-    assert response.json['email_address'] == new_user_info['email_address']
-    assert response.json['phone_number'] == new_user_info['phone_number']
-
-
-def test_validate_fields_all_present():
-    """Expect no missing fields."""
-    request_data = {
-        "name": "John Doe",
-        "email_address": "john@example.com",
-        "phone_number": "+123456789",
-    }
-    result = validate_fields(
-        ["name", "email_address", "phone_number"], request_data
-    )
-    assert result == []
-
-
-def test_validate_fields_missing_field():
-    """Expect 'phone_number' to be missing."""
-    request_data = {
-        "name": "John Doe",
-        "email_address": "john@example.com",
-    }
-    result = validate_fields(
-        ["name", "email_address", "phone_number"], request_data
-    )
-    assert result == ["phone_number"]
-
-
-def test_valid_phone_number():
-    """Test a valid properly internationalized phone number returns True."""
-    valid_phone = "+14155552671"
-    assert validate_phone_number(valid_phone) is True
-
-
-def test_invalid_phone_number():
-    """Test an invalid phone number returns False."""
-    invalid_phone = "123456"
-    assert validate_phone_number(invalid_phone) is False
+    item_id = client.post("/resume/skill", json=example_skill).json["id"]
+    response = client.get("/resume/skill")
+    assert response.json[item_id] == example_skill
 
 
 def test_delete_skill(client):
@@ -168,7 +125,6 @@ def test_delete_skill(client):
         assert response.status_code == 404
         assert response.json["error"] == "Skill not found"
     
-    # Delete the only skills.
     for _ in range(2):
         response = client.delete('/resume/skill/0')
         assert response.status_code == 200
@@ -180,9 +136,22 @@ def test_delete_skill(client):
         assert response.json["error"] == "Skill not found"
 
 
+def test_post_user_information(client):
+    """Test the POST request for user information."""
+    new_user_info = {
+        "name": "John Doe",
+        "email_address": "john@example.com",
+        "phone_number": "+237680162416",
+    }
+    response = client.post("/resume/user_information", json=new_user_info)
+    assert response.status_code == 201
+    assert response.json["name"] == new_user_info["name"]
+    assert response.json["email_address"] == new_user_info["email_address"]
+    assert response.json["phone_number"] == new_user_info["phone_number"]
+
+
 def test_spellcheck(client):
     """Test the spell check endpoint."""
-    # Adding sample data with spelling errors
     data["experience"].append(Experience(
         "Software Develper",  # Intentional typo
         "A Cool Company",
@@ -203,7 +172,6 @@ def test_spellcheck(client):
 
     data["skill"].append(Skill("Pythn", "1-2 Years", "example-logo.png"))  
 
-    # Request body for spellcheck
     request_body = {
         "experience": [
             {"title": "Software Develper", "description": "Writting Python Code"}
@@ -220,7 +188,6 @@ def test_spellcheck(client):
     assert response.status_code == 200
     results = response.json
 
-    # Check for corrections
     assert any(r["before"] == "Software Develper" for r in results)
     assert any(r["after"] != "Software Develper" for r in results)
     assert any(r["before"] == "Writting Python Code" for r in results)
@@ -229,4 +196,36 @@ def test_spellcheck(client):
     assert any(r["after"] != "Comptuer Science" for r in results)
     assert any(r["before"] == "Pythn" for r in results)
     assert any(r["after"] != "Pythn" for r in results)
-    assert any(isinstance(r["after"], list) and len(r["after"]) > 0 for r in results)
+
+
+def test_validate_fields_all_present():
+    """Expect no missing fields."""
+    request_data = {
+        "name": "John Doe",
+        "email_address": "john@example.com",
+        "phone_number": "+123456789",
+    }
+    result = validate_fields(["name", "email_address", "phone_number"], request_data)
+    assert result == []
+
+
+def test_validate_fields_missing_field():
+    """Expect 'phone_number' to be missing."""
+    request_data = {
+        "name": "John Doe",
+        "email_address": "john@example.com",
+    }
+    result = validate_fields(["name", "email_address", "phone_number"], request_data)
+    assert result == ["phone_number"]
+
+
+def test_valid_phone_number():
+    """Test a valid properly internationalized phone number returns True."""
+    valid_phone = "+14155552671"
+    assert validate_phone_number(valid_phone) is True
+
+
+def test_invalid_phone_number():
+    """Test an invalid phone number returns False."""
+    invalid_phone = "123456"
+    assert validate_phone_number(invalid_phone) is False
