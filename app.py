@@ -10,7 +10,8 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from flask import Flask, jsonify, request, send_from_directory
 from models import Experience, Education, Skill, UserInformation
-from helpers import validate_fields, validate_phone_number
+from helpers import validate_fields, validate_phone_number, load_data, save_data, generate_id
+
 
 spell = SpellChecker()
 
@@ -25,8 +26,7 @@ app = Flask(__name__)
 CORS(app)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-data = {"experience": [], "education": [], "skill": [], "user_information": []}
-
+data = load_data('data/data.json')
 
 def reset_data():
     """
@@ -61,7 +61,7 @@ def reset_data():
     ]
 
 
-reset_data()
+#reset_data()
 
 
 def allowed_file(filename):
@@ -155,6 +155,9 @@ def experience():
                 filename = secure_filename(logo_file.filename)
                 logo_file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
                 logo_filename = filename
+        
+        # Create new experience
+        new_id = generate_id(data, 'experience')
 
         # Create new experience
         new_experience = Experience(
@@ -164,16 +167,25 @@ def experience():
             request_body["end_date"],
             request_body["description"],
             logo_filename,
+            new_id,
         )
         data["experience"].append(new_experience)
-        return (
-            jsonify(
-                {"message": "New experience created", "id": len(data["experience"]) - 1}
-            ),
-            201,
-        )
+        save_data('data/data.json', data)
+        new_experience_index = len(data["experience"]) - 1
+        return jsonify({"message": "New experience created", "id": new_experience_index}), 201
 
     return 400
+
+
+@app.route("/resume/experience/<int:index>", methods=["DELETE"])
+def delete_experience(index):
+    """
+    Delete experience entry by index
+    """
+    if 0 <= index < len(data["experience"]):
+        data["experience"].pop(index)
+        return jsonify({"message": "Experience entry successfully deleted"}), 200
+    return jsonify({"error": "Experience entry not found"}), 404
 
 
 @app.route("/resume/education", methods=["GET", "POST"])
@@ -201,16 +213,13 @@ def education():
         )
 
         if missing_fields or invalid_fields:
-            return (
-                jsonify(
-                    {
-                        "error": "Validation failed",
-                        "missing_fields": missing_fields,
-                        "invalid_fields": invalid_fields,
-                    }
-                ),
-                400,
-            )
+            return jsonify({
+                "error": "Validation failed",
+                "missing_fields": missing_fields,
+                "invalid_fields": invalid_fields
+            }), 400
+        
+        new_id = generate_id(data, 'education')
 
         # Create new education entry
         new_education = Education(
@@ -220,14 +229,12 @@ def education():
             request_body["end_date"],
             request_body["grade"],
             DEFAULT_LOGO,
+            new_id
         )
         data["education"].append(new_education)
-        return (
-            jsonify(
-                {"message": "New education created", "id": len(data["education"]) - 1}
-            ),
-            201,
-        )
+        save_data('data/data.json', data)
+        new_education_index = new_id - 1
+        return jsonify({"message": "New education created", "id": new_education_index}), 201
 
     return 400
 
@@ -311,10 +318,9 @@ def skill():
             request_body["name"], request_body["proficiency"], logo_filename
         )
         data["skill"].append(new_skill)
-        return (
-            jsonify({"message": "New skill created", "id": len(data["skill"]) - 1}),
-            201,
-        )
+
+        save_data('data/data.json', data)
+        return jsonify({"message": "New skill created", "id": len(data["skill"]) - 1}), 201
 
     return 400
 
@@ -348,7 +354,9 @@ def delete_skill(index):
     Delete skill by index
     """
     if 0 <= index < len(data["skill"]):
-        data["skill"].pop(index)
+        removed_skill = data["skill"].pop(index)
+        logging.info("Skill deleted: %s", removed_skill.name)
+        save_data('data/data.json', data)
         return jsonify({"message": "Skill successfully deleted"}), 200
     return jsonify({"error": "Skill not found"}), 404
 

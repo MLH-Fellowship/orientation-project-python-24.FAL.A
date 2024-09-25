@@ -19,6 +19,7 @@ class Experience:
     end_date: str
     description: str
     logo: str
+    id: int = None
 
 
 @dataclass
@@ -33,6 +34,7 @@ class Education:
     end_date: str
     grade: str
     logo: str
+    id: int = None
 
 
 @dataclass
