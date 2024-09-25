@@ -6,10 +6,10 @@ import os
 import logging
 from werkzeug.utils import secure_filename
 from flask import Flask, jsonify, request, send_from_directory
-from models import Experience, Education, Skill, UserInformation
-from helpers import validate_fields, validate_phone_number
 from spellchecker import SpellChecker
 from flask_cors import CORS
+from models import Experience, Education, Skill, UserInformation
+from helpers import validate_fields, validate_phone_number
 
 spell = SpellChecker()
 
@@ -173,7 +173,6 @@ def experience():
     return jsonify({}), 200
 
 
-
 @app.route("/resume/education", methods=["GET", "POST"])
 def education():
     """
@@ -227,7 +226,6 @@ def education():
         )
 
     return jsonify({}), 200
-
 
 
 @app.route("/resume/experience/<int:index>", methods=["GET"])
