@@ -102,7 +102,187 @@ def hello_world():
     """
     return jsonify({"message": "Hello, World!"})
 
-# Remaining routes including '/resume/experience', '/resume/education', '/resume/skill', etc.
+@app.route("/resume/experience", methods=["GET", "POST"])
+def experience():
+    """
+    Handle experience requests for GET and POST methods
+    """
+    if request.method == "GET":
+        return jsonify([exp.__dict__ for exp in data["experience"]]), 200
+
+    if request.method == "POST":
+        request_body = request.form if request.content_type == "multipart/form-data" else request.get_json()
+        if not request_body:
+            return jsonify({"error": "Request must be JSON or include form data"}), 400
+
+        required_fields = {"title": str, "company": str, "start_date": str, "end_date": str, "description": str}
+        missing_fields, invalid_fields = handle_missing_invalid_fields(request_body, required_fields)
+
+        if missing_fields or invalid_fields:
+            return jsonify({
+                "error": "Validation failed",
+                "missing_fields": missing_fields,
+                "invalid_fields": invalid_fields
+            }), 400
+
+        # Handle logo file
+        logo_filename = DEFAULT_LOGO
+        if "logo" in request.files:
+            logo_file = request.files["logo"]
+            if logo_file and allowed_file(logo_file.filename):
+                filename = secure_filename(logo_file.filename)
+                logo_file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+                logo_filename = filename
+
+        # Create new experience
+        new_experience = Experience(
+            request_body["title"],
+            request_body["company"],
+            request_body["start_date"],
+            request_body["end_date"],
+            request_body["description"],
+            logo_filename,
+        )
+        data["experience"].append(new_experience)
+        return jsonify({"message": "New experience created", "id": len(data["experience"]) - 1}), 201
+
+
+@app.route("/resume/education", methods=["GET", "POST"])
+def education():
+    """
+    Handle education requests for GET and POST methods
+    """
+    if request.method == "GET":
+        return jsonify([edu.__dict__ for edu in data["education"]]), 200
+
+    if request.method == "POST":
+        request_body = request.get_json()
+        if not request_body:
+            return jsonify({"error": "Request must be JSON"}), 400
+
+        required_fields = {"course": str, "school": str, "start_date": str, "end_date": str, "grade": str}
+        missing_fields, invalid_fields = handle_missing_invalid_fields(request_body, required_fields)
+
+        if missing_fields or invalid_fields:
+            return jsonify({
+                "error": "Validation failed",
+                "missing_fields": missing_fields,
+                "invalid_fields": invalid_fields
+            }), 400
+
+        # Create new education entry
+        new_education = Education(
+            request_body["course"],
+            request_body["school"],
+            request_body["start_date"],
+            request_body["end_date"],
+            request_body["grade"],
+            DEFAULT_LOGO,
+        )
+        data["education"].append(new_education)
+        return jsonify({"message": "New education created", "id": len(data["education"]) - 1}), 201
+
+
+@app.route("/resume/experience/<int:index>", methods=["GET"])
+def experience_by_index(index):
+    """
+    Retrieve experience by index
+    """
+    if 0 <= index < len(data["experience"]):
+        return jsonify(data["experience"][index].__dict__), 200
+    return jsonify({"error": "Experience not found"}), 404
+
+
+@app.route("/resume/education/<int:index>", methods=["GET"])
+def education_by_index(index):
+    """
+    Retrieve education by index
+    """
+    if 0 <= index < len(data["education"]):
+        return jsonify(data["education"][index].__dict__), 200
+    return jsonify({"error": "Education not found"}), 404
+
+@app.route("/resume/education/<int:index>", methods=["DELETE"])
+def delete_education(index):
+    """
+    Delete education entry by index
+    """
+    if 0 <= index < len(data["education"]):
+        data["education"].pop(index)
+        return jsonify({"message": "Education entry successfully deleted"}), 200
+    return jsonify({"error": "Education entry not found"}), 404
+
+
+@app.route("/resume/skill", methods=["GET", "POST"])
+def skill():
+    """
+    Handle skill requests
+    """
+    if request.method == "GET":
+        return jsonify([sk.__dict__ for sk in data["skill"]]), 200
+
+    if request.method == "POST":
+        request_body = request.form if request.content_type == "multipart/form-data" else request.get_json()
+        if not request_body:
+            return jsonify({"error": "Request must be JSON or include form data"}), 400
+
+        required_fields = {"name": str, "proficiency": str}
+        missing_fields, invalid_fields = handle_missing_invalid_fields(request_body, required_fields)
+
+        if missing_fields or invalid_fields:
+            return jsonify({
+                "error": "Validation failed",
+                "missing_fields": missing_fields,
+                "invalid_fields": invalid_fields
+            }), 400
+
+        # Handle logo file
+        logo_filename = DEFAULT_LOGO
+        if "logo" in request.files:
+            logo_file = request.files["logo"]
+            if logo_file and allowed_file(logo_file.filename):
+                filename = secure_filename(logo_file.filename)
+                logo_file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+                logo_filename = filename
+
+        # Create new skill
+        new_skill = Skill(request_body["name"], request_body["proficiency"], logo_filename)
+        data["skill"].append(new_skill)
+        return jsonify({"message": "New skill created", "id": len(data["skill"]) - 1}), 201
+
+
+@app.route("/resume/user_information", methods=["GET", "POST", "PUT"])
+def user_information():
+    """
+    Handle user information requests
+    """
+    if request.method == "GET":
+        return jsonify(data["user_information"]), 200
+
+    error = validate_fields(["name", "email_address", "phone_number"], request.json)
+
+    is_valid_phone_number = validate_phone_number(request.json["phone_number"])
+    if not is_valid_phone_number:
+        return jsonify({"error": "Invalid phone number"}), 400
+    if error:
+        return jsonify({"error": f"{', '.join(error)} parameter(s) is required"}), 400
+
+    if request.method in ("POST", "PUT"):
+        data["user_information"] = request.json
+        return jsonify(data["user_information"]), 201
+
+@app.route("/resume/skill/<int:index>", methods=["DELETE"])
+def delete_skill(index):
+    """
+    Delete skill by index
+    """
+    if 0 <= index < len(data["skill"]):
+        data["skill"].pop(index)
+        return jsonify({"message": "Skill successfully deleted"}), 200
+    return jsonify({"error": "Skill not found"}), 404
+
+
+
 
 @app.route("/resume/spellcheck", methods=["POST"])
 def spellcheck():

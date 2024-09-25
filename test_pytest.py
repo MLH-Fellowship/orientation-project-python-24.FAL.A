@@ -8,6 +8,12 @@ from helpers import validate_fields, validate_phone_number
 from models import Experience, Education, Skill
 
 
+@pytest.fixture
+def client():
+    """Fixture to provide a Flask test client."""
+    with app.test_client() as client:
+        yield client
+
 @pytest.fixture(autouse=True)
 def reset_data():
     """Reset the data to its initial state before each test."""
