@@ -1,15 +1,17 @@
 """
 Flask Application for Resume Management
 """
-
 import os
 import logging
+
+from spellchecker import SpellChecker
+from flask_cors import CORS
+
 from werkzeug.utils import secure_filename
 from flask import Flask, jsonify, request, send_from_directory
 from models import Experience, Education, Skill, UserInformation
 from helpers import validate_fields, validate_phone_number, load_data, save_data, generate_id
-from spellchecker import SpellChecker
-from flask_cors import CORS
+
 
 spell = SpellChecker()
 
@@ -58,7 +60,9 @@ def reset_data():
         UserInformation("Joe Smith", "example@gmail.com", "+11234567890"),
     ]
 
+
 #reset_data()
+
 
 def allowed_file(filename):
     """
@@ -68,6 +72,7 @@ def allowed_file(filename):
     :return: True if the file extension is allowed, False otherwise
     """
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 def handle_missing_invalid_fields(request_body, required_fields):
     """
@@ -85,6 +90,7 @@ def handle_missing_invalid_fields(request_body, required_fields):
     ]
     return missing_fields, invalid_fields
 
+
 @app.route("/", strict_slashes=False)
 def home():
     """
@@ -92,12 +98,14 @@ def home():
     """
     return "Welcome to MLH 24.FAL.A.2 Orientation API Project!!"
 
+
 @app.route("/test")
 def hello_world():
     """
     Returns a JSON test message
     """
     return jsonify({"message": "Hello, World!"})
+
 
 @app.route("/resume/experience", methods=["GET", "POST"])
 def experience():
@@ -108,19 +116,36 @@ def experience():
         return jsonify([exp.__dict__ for exp in data["experience"]]), 200
 
     if request.method == "POST":
-        request_body = request.form if request.content_type == "multipart/form-data" else request.get_json()
+        request_body = (
+            request.form
+            if request.content_type == "multipart/form-data"
+            else request.get_json()
+        )
         if not request_body:
             return jsonify({"error": "Request must be JSON or include form data"}), 400
 
-        required_fields = {"title": str, "company": str, "start_date": str, "end_date": str, "description": str}
-        missing_fields, invalid_fields = handle_missing_invalid_fields(request_body, required_fields)
+        required_fields = {
+            "title": str,
+            "company": str,
+            "start_date": str,
+            "end_date": str,
+            "description": str,
+        }
+        missing_fields, invalid_fields = handle_missing_invalid_fields(
+            request_body, required_fields
+        )
 
         if missing_fields or invalid_fields:
-            return jsonify({
-                "error": "Validation failed",
-                "missing_fields": missing_fields,
-                "invalid_fields": invalid_fields
-            }), 400
+            return (
+                jsonify(
+                    {
+                        "error": "Validation failed",
+                        "missing_fields": missing_fields,
+                        "invalid_fields": invalid_fields,
+                    }
+                ),
+                400,
+            )
 
         # Handle logo file
         logo_filename = DEFAULT_LOGO
@@ -130,7 +155,7 @@ def experience():
                 filename = secure_filename(logo_file.filename)
                 logo_file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
                 logo_filename = filename
-        
+
         # Create new experience
         new_id = generate_id(data, 'experience')
 
@@ -148,6 +173,9 @@ def experience():
         save_data('data/data.json', data)
         new_experience_index = len(data["experience"]) - 1
         return jsonify({"message": "New experience created", "id": new_experience_index}), 201
+
+    return 400
+
 
 @app.route("/resume/experience/<int:index>", methods=["DELETE"])
 def delete_experience(index):
@@ -173,8 +201,16 @@ def education():
         if not request_body:
             return jsonify({"error": "Request must be JSON"}), 400
 
-        required_fields = {"course": str, "school": str, "start_date": str, "end_date": str, "grade": str}
-        missing_fields, invalid_fields = handle_missing_invalid_fields(request_body, required_fields)
+        required_fields = {
+            "course": str,
+            "school": str,
+            "start_date": str,
+            "end_date": str,
+            "grade": str,
+        }
+        missing_fields, invalid_fields = handle_missing_invalid_fields(
+            request_body, required_fields
+        )
 
         if missing_fields or invalid_fields:
             return jsonify({
@@ -182,7 +218,7 @@ def education():
                 "missing_fields": missing_fields,
                 "invalid_fields": invalid_fields
             }), 400
-        
+
         new_id = generate_id(data, 'education')
 
         # Create new education entry
@@ -199,6 +235,8 @@ def education():
         save_data('data/data.json', data)
         new_education_index = new_id - 1
         return jsonify({"message": "New education created", "id": new_education_index}), 201
+
+    return 400
 
 
 @app.route("/resume/experience/<int:index>", methods=["GET"])
@@ -220,6 +258,7 @@ def education_by_index(index):
         return jsonify(data["education"][index].__dict__), 200
     return jsonify({"error": "Education not found"}), 404
 
+
 @app.route("/resume/education/<int:index>", methods=["DELETE"])
 def delete_education(index):
     """
@@ -240,19 +279,30 @@ def skill():
         return jsonify([sk.__dict__ for sk in data["skill"]]), 200
 
     if request.method == "POST":
-        request_body = request.form if request.content_type == "multipart/form-data" else request.get_json()
+        request_body = (
+            request.form
+            if request.content_type == "multipart/form-data"
+            else request.get_json()
+        )
         if not request_body:
             return jsonify({"error": "Request must be JSON or include form data"}), 400
 
         required_fields = {"name": str, "proficiency": str}
-        missing_fields, invalid_fields = handle_missing_invalid_fields(request_body, required_fields)
+        missing_fields, invalid_fields = handle_missing_invalid_fields(
+            request_body, required_fields
+        )
 
         if missing_fields or invalid_fields:
-            return jsonify({
-                "error": "Validation failed",
-                "missing_fields": missing_fields,
-                "invalid_fields": invalid_fields
-            }), 400
+            return (
+                jsonify(
+                    {
+                        "error": "Validation failed",
+                        "missing_fields": missing_fields,
+                        "invalid_fields": invalid_fields,
+                    }
+                ),
+                400,
+            )
 
         # Handle logo file
         logo_filename = DEFAULT_LOGO
@@ -264,10 +314,15 @@ def skill():
                 logo_filename = filename
 
         # Create new skill
-        new_skill = Skill(request_body["name"], request_body["proficiency"], logo_filename)
+        new_skill = Skill(
+            request_body["name"], request_body["proficiency"], logo_filename
+        )
         data["skill"].append(new_skill)
+
         save_data('data/data.json', data)
         return jsonify({"message": "New skill created", "id": len(data["skill"]) - 1}), 201
+
+    return 400
 
 
 @app.route("/resume/user_information", methods=["GET", "POST", "PUT"])
@@ -290,6 +345,9 @@ def user_information():
         data["user_information"] = request.json
         return jsonify(data["user_information"]), 201
 
+    return 400
+
+
 @app.route("/resume/skill/<int:index>", methods=["DELETE"])
 def delete_skill(index):
     """
@@ -303,10 +361,12 @@ def delete_skill(index):
     return jsonify({"error": "Skill not found"}), 404
 
 
-
-
 @app.route("/resume/spellcheck", methods=["POST"])
 def spellcheck():
+    """
+    Spellcheck the resume.
+    (TODO add more detailed info here)
+    """
     request_body = request.get_json()
     if not request_body:
         return jsonify({"error": "Request must be JSON"}), 400
@@ -317,33 +377,54 @@ def spellcheck():
         title = exp.get("title", "")
         description = exp.get("description", "")
         if title:
-            results.append({
-                "before": title,
-                "after": list(spell.candidates(title)) if spell.candidates(title) else []
-            })
+            results.append(
+                {
+                    "before": title,
+                    "after": (
+                        list(spell.candidates(title)) if spell.candidates(title) else []
+                    ),
+                }
+            )
         if description:
-            results.append({
-                "before": description,
-                "after": list(spell.candidates(description)) if spell.candidates(description) else []
-            })
+            results.append(
+                {
+                    "before": description,
+                    "after": (
+                        list(spell.candidates(description))
+                        if spell.candidates(description)
+                        else []
+                    ),
+                }
+            )
 
     for edu in request_body.get("education", []):
         course = edu.get("course", "")
         if course:
-            results.append({
-                "before": course,
-                "after": list(spell.candidates(course)) if spell.candidates(course) else []
-            })
+            results.append(
+                {
+                    "before": course,
+                    "after": (
+                        list(spell.candidates(course))
+                        if spell.candidates(course)
+                        else []
+                    ),
+                }
+            )
 
     for sk in request_body.get("skill", []):
         name = sk.get("name", "")
         if name:
-            results.append({
-                "before": name,
-                "after": list(spell.candidates(name)) if spell.candidates(name) else []
-            })
+            results.append(
+                {
+                    "before": name,
+                    "after": (
+                        list(spell.candidates(name)) if spell.candidates(name) else []
+                    ),
+                }
+            )
 
     return jsonify(results), 200
+
 
 @app.route("/custom-section", methods=["POST"])
 def add_custom_section():
@@ -368,6 +449,7 @@ def add_custom_section():
     logging.info("New custom section added: %s", title)
     return jsonify({"message": "Custom section added", "id": section_id}), 201
 
+
 @app.route("/custom-sections", methods=["GET"])
 def get_custom_sections():
     """
@@ -375,10 +457,12 @@ def get_custom_sections():
     """
     return jsonify(data["custom_sections"]), 200
 
+
 if __name__ == "__main__":
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
     app.run(debug=True)
+
 
 @app.route("/uploads/<path:filename>")
 def uploaded_file(filename):

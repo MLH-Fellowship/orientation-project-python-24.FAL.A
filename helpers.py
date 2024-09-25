@@ -1,31 +1,35 @@
-'''
+"""
 Helper functions for the Flask application
-'''
+"""
+
 import json
 import phonenumbers
 from models import Experience, Education, Skill, UserInformation
 
 
 def validate_fields(field_names, request_data):
-    '''
+    """
     Checks that the required fields are in the request data
-    '''
-    return [field for field in field_names
-            if field not in request_data or request_data[field] in [None, '', 'null']]
+    """
+    return [
+        field
+        for field in field_names
+        if field not in request_data or request_data[field] in [None, "", "null"]
+    ]
 
 
 def validate_phone_number(phone_number):
-    '''
+    """
     Checks that the phone number is valid and properly internationalized
-    '''
+    """
     try:
-        if phone_number and phone_number.startswith('+'):
+        if phone_number and phone_number.startswith("+"):
             parsed_number = phonenumbers.parse(phone_number, None)
             return phonenumbers.is_valid_number(parsed_number)
         return False
     except phonenumbers.phonenumberutil.NumberParseException:
         return False
-    
+
 
 def load_data(filename):
     """
@@ -34,7 +38,7 @@ def load_data(filename):
     Saving and loading data from a JSON file
     """
     try:
-        with open(filename, 'r') as file:
+        with open(filename, 'r', encoding="utf-8") as file:
             data = json.load(file)
         return {
             "experience": [Experience(**exp) for exp in data.get('experience', [])], 
@@ -44,18 +48,18 @@ def load_data(filename):
         }
     except FileNotFoundError:
         print(f"File {filename} not found.")
-        return {"experience": [], "education": [], "skill": [], "user_information": []}  
+        return {"experience": [], "education": [], "skill": [], "user_information": []}
     except json.JSONDecodeError:
         print("Error decoding JSON.")
         return {"experience": [], "education": [], "skill": [], "user_information": []}
-    
+
 def save_data(filename, data):
     """
     This function writes the data to a JSON file. 
     First it converts the data to a dictionary, then writes it to the file.
     """
     try:
-        with open(filename, 'w') as file:
+        with open(filename, 'w', encoding="utf-8") as file:
             json_data = {
                 "experience": [exp.__dict__ for exp in data['experience']],
                 "education": [edu.__dict__ for edu in data['education']],
