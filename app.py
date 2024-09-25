@@ -155,7 +155,7 @@ def experience():
                 filename = secure_filename(logo_file.filename)
                 logo_file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
                 logo_filename = filename
-        
+
         # Create new experience
         new_id = generate_id(data, 'experience')
 
@@ -218,7 +218,7 @@ def education():
                 "missing_fields": missing_fields,
                 "invalid_fields": invalid_fields
             }), 400
-        
+
         new_id = generate_id(data, 'education')
 
         # Create new education entry
