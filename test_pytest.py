@@ -71,6 +71,30 @@ def test_experience(client):
     response = client.get("/resume/experience")
     assert response.json[item_id] == example_experience
 
+def test_delete_experience(client):
+    """Test the experience deletion endpoint."""
+    get_response = client.get("/resume/experience")
+    assert get_response.status_code == 200
+    initial_experience_count = len(get_response.json)
+
+    last_index = initial_experience_count - 1
+    response = client.delete(f"/resume/experience/{last_index}")
+    assert response.status_code == 200
+    assert response.json["message"] == "Experience entry successfully deleted"
+
+    get_response_after_delete = client.get("/resume/experience")
+    assert get_response_after_delete.status_code == 200
+    assert len(get_response_after_delete.json) == initial_experience_count - 1
+
+    response = client.delete(f"/resume/experience/{last_index}")
+    assert response.status_code == 404
+    assert response.json["error"] == "Experience entry not found"
+
+    invalid_index = initial_experience_count + 1
+    response = client.delete(f"/resume/experience/{invalid_index}")
+    assert response.status_code == 404
+    assert response.json["error"] == "Experience entry not found"
+
 
 def test_education(client):
     """Add a new education and check if it's returned in the list."""
