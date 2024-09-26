@@ -529,3 +529,10 @@ def uploaded_file(filename):
     Function for serving uploaded files from /uploads.
     """
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
+
+@app.route("/resume/data", methods=["GET"])
+def get_data():
+    """
+    Get all data from the data.json file
+    """
+    return jsonify(data), 200
