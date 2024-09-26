@@ -41,32 +41,11 @@ def reset_data():
     Resets the values stored in data to placeholders.
     """
     data.clear()
-    data["experience"] = [
-        Experience(
-            "Software Developer",
-            "A Cool Company",
-            "October 2022",
-            "Present",
-            "Writing Python Code",
-            "example-logo.png",
-        ),
-    ]
-    data["education"] = [
-        Education(
-            "Computer Science",
-            "University of Tech",
-            "September 2019",
-            "July 2022",
-            "80%",
-            "example-logo.png",
-        ),
-    ]
-    data["skill"] = [
-        Skill("Python", "1-2 Years", "example-logo.png"),
-    ]
-    data["user_information"] = [
-        UserInformation("Joe Smith", "example@gmail.com", "+11234567890"),
-    ]
+    data["experience"] = []
+    data["education"] = []
+    data["skill"] = []
+    data["user_information"] = []
+    save_data("data/data.json", data)
 
 
 # reset_data()
@@ -114,6 +93,13 @@ def hello_world():
     """
     return jsonify({"message": "Hello, World!"})
 
+@app.route("/reset", methods=["POST"])
+def reset():
+    """
+    Resets the data to the initial state
+    """
+    reset_data()
+    return jsonify({"message": "Data has been reset"}), 200
 
 @app.route("/resume/experience", methods=["GET", "POST"])
 def experience():
@@ -176,7 +162,7 @@ def experience():
         )
         data["experience"].append(new_experience)
         save_data("data/data.json", data)
-        new_experience_index = len(data["experience"]) - 1
+        new_experience_index = new_id - 1
         return (
             jsonify({"message": "New experience created", "id": new_experience_index}),
             201,
@@ -192,6 +178,7 @@ def delete_experience(index):
     """
     if 0 <= index < len(data["experience"]):
         data["experience"].pop(index)
+        save_data("data/data.json", data)
         return jsonify({"message": "Experience entry successfully deleted"}), 200
     return jsonify({"error": "Experience entry not found"}), 404
 
@@ -286,6 +273,7 @@ def delete_education(index):
     """
     if 0 <= index < len(data["education"]):
         data["education"].pop(index)
+        save_data("data/data.json", data)
         return jsonify({"message": "Education entry successfully deleted"}), 200
     return jsonify({"error": "Education entry not found"}), 404
 
@@ -390,19 +378,29 @@ def user_information():
     Handle user information requests
     """
     if request.method == "GET":
-        return jsonify(data["user_information"]), 200
+        return jsonify([user.__dict__ for user in data["user_information"]]), 200
 
-    error = validate_fields(["name", "email_address", "phone_number"], request.json)
+    request_body = request.get_json()
 
-    is_valid_phone_number = validate_phone_number(request.json["phone_number"])
-    if not is_valid_phone_number:
-        return jsonify({"error": "Invalid phone number"}), 400
+    error = validate_fields(["name", "email_address", "phone_number"], request_body)
     if error:
         return jsonify({"error": f"{', '.join(error)} parameter(s) is required"}), 400
 
+    is_valid_phone_number = validate_phone_number(request_body["phone_number"])
+    if not is_valid_phone_number:
+        return jsonify({"error": "Invalid phone number"}), 400
+
     if request.method in ("POST", "PUT"):
-        data["user_information"] = request.json
-        return jsonify(data["user_information"]), 201
+        new_user_information = UserInformation(
+            name=request_body["name"],
+            email_address=request_body["email_address"],
+            phone_number=request_body["phone_number"]
+        )
+
+        data["user_information"] = [new_user_information]
+        save_data("data/data.json", data)
+
+        return jsonify(new_user_information.__dict__), 201
 
     return 400
 
@@ -535,4 +533,5 @@ def get_data():
     """
     Get all data from the data.json file
     """
-    return jsonify(data), 200
+    final_data = load_data("data/data.json")
+    return jsonify(final_data), 200
