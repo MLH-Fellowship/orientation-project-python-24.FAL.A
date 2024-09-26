@@ -414,3 +414,11 @@ def test_save_data(tmpdir):
     # Assert that the file contains the correct data
     assert saved_data["experience"][0]["title"] == "Developer"
     assert saved_data["user_information"][0]["name"] == "John Doe"
+
+def test_reset_endpoint(client):
+    """
+    Test the POST /reset endpoint to ensure it resets the data.
+    """
+    response = client.post("/reset")
+    assert response.status_code == 200
+    assert response.json["message"] == "Data has been reset"
