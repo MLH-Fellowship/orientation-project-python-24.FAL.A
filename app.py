@@ -378,33 +378,26 @@ def user_information():
     Handle user information requests
     """
     if request.method == "GET":
-        # Return the user information (assuming there's only one user in this case)
         return jsonify([user.__dict__ for user in data["user_information"]]), 200
 
     request_body = request.get_json()
 
-    # Validate the required fields
     error = validate_fields(["name", "email_address", "phone_number"], request_body)
     if error:
         return jsonify({"error": f"{', '.join(error)} parameter(s) is required"}), 400
 
-    # Validate the phone number format
     is_valid_phone_number = validate_phone_number(request_body["phone_number"])
     if not is_valid_phone_number:
         return jsonify({"error": "Invalid phone number"}), 400
 
     if request.method in ("POST", "PUT"):
-        # Create new user information instance
         new_user_information = UserInformation(
             name=request_body["name"],
             email_address=request_body["email_address"],
             phone_number=request_body["phone_number"]
         )
 
-        # Since user information is unique, overwrite the existing one
         data["user_information"] = [new_user_information]
-
-        # Save the data to the JSON file
         save_data("data/data.json", data)
 
         return jsonify(new_user_information.__dict__), 201
@@ -537,8 +530,8 @@ def uploaded_file(filename):
 
 @app.route("/resume/data", methods=["GET"])
 def get_data():
-    data = load_data("data/data.json")
     """
     Get all data from the data.json file
     """
-    return jsonify(data), 200
+    final_data = load_data("data/data.json")
+    return jsonify(final_data), 200
