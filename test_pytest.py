@@ -45,7 +45,19 @@ def reset_data():
         "user_information": {"name": "", "email_address": "", "phone_number": ""},
     }
 
+def test_get_all_data(client):
+    data = load_data("data/data.json")
+    expected_data = {
+        "experience": [exp.__dict__ for exp in data["experience"]],
+        "education": [edu.__dict__ for edu in data["education"]],
+        "skill": [sk.__dict__ for sk in data["skill"]],
+        "user_information": [inf.__dict__ for inf in data["user_information"]],
+    }
 
+    response = client.get("/resume/data")
+    assert response.status_code == 200
+    assert response.json == expected_data
+    
 def test_index(client):
     """Test the index route."""
     response = client.get("/")
